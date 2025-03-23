@@ -148,6 +148,85 @@
 		
 		Some headers use preprocessor symbol "UNICODE", others "_UNICODE" - Warning! Define always both symbols (Visual C++ sets them both by default when create a new project).
 
+- Handles
+
+	A number the OS uses to identify an object - Warning! Not a pointer (error on attemp to dereference)
+	Opaque data type (i.e. fully encapsulated - unknown internals - user-defined/built-in data type)
+	Handlers (and correponding objects) are created and operated (handler as a parameter) through functions
+
 - Window
 
-	TODO
+	Programming construct (central to Windows OS - hence its name):
+	
+		Occupy certain portion of the screen
+		May or not be visible
+		Know how to draw itself
+		Respond to user or OS events
+	
+	Type - by importance
+	
+		Application/Main window
+		
+			Non-client area: the frame (title bar, maximize/minimize buttons); managed by the OS
+			Client area: the area within the frame (other standard UI elements); managed by the program
+		
+		UI Control window: does not exist by itself - relative to application window (e.g. move together, notify events)
+	
+	Type - by role
+	
+		Parent window: contain - clipped ot boders - other (child) windows e.g. application window (parent) and UI control window (child)
+		Owner window: own other (owned) windows e.g. application window (owner) and modal dialog window (owned)
+	
+	Handle
+	
+		Windows are objects referenced by a handler - Warning! Not a C++ class
+		Data type: "HWND" (Handler Window)
+	
+	Functions
+	
+		Create: "CreateWindow", "CreateWindowEx"
+		Operate: "MoveWindow"
+	
+	Coordinates
+	
+		Unit of length: device-independent pixel (DIP/DP)
+		
+		Type - by space
+		
+			Warning! Origin (0,0) is always top-left corner of corresponding region
+			
+			Screen coordinates: relative to the screen
+			Window coordinates: relative to a window (frame included)
+			Client coordinates: relative to a window client area
+
+- "WinMain" application entry point 
+
+	Windows entry-point function
+	
+		"WinMain" (ANSI)
+		
+			"int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow);"
+			
+			"hInstance": handle to an instance or to a module
+			"hPrevInstance": no meaning (used in 16-bit Windows); now always 0
+			"lpCmdLine": command-line arguments as ANSI string
+			"nCmdShow": flag to indicate how main application window is shown (minimized, maximized, normal)
+			
+			"int": retval (i.e. return value) type; OS not use it (can be passed as a status code to other program)
+			"WINAPI": calling convention; specify how arguments to function are placed (order) and managed on the stack	
+		
+		"wWinMain" (Unicode - preferred)
+		
+			"int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow);"
+			
+			"pCmdLine": command-line arguments as Unicode string
+	
+	Utils
+	
+		"GetCommandLine": get Unicode copy of command-line arguments
+		"CommandLiveToArgvW": convert command-line arguments into argv-style array
+	
+	Microsoft C runtime library (CRT)
+	
+		Provide an implementation of "main" that calls either "WinMain" or "wWinMain"
+		Some more work inside "main" (e.g. call any static initializers before "wWinMain")
