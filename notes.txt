@@ -1,0 +1,153 @@
+
+- Microsoft Windows Software Development Kit (SDK)
+
+	Write a Windows program (in C or C++).
+	Headers and libraries necessary to compile and link applications.
+	Cmmand-line tools for building applications (e.g. Visual C++ compiler and linker).
+	Not support hardware driver development.
+
+- Microsoft Visual Studio (VS)
+
+	IDE for software development.
+	Edit, debug, and compile code; publish applications.
+	Extra features: compilers, intellisense (i.e. code completion, parameter info, quick info, member info), graphic designer.
+
+- Windows APIs
+
+	Most consist of either functions or Component Object Model (COM) interfaces; very few are provided as C++ classes (e.g. "GDI+" - 2D graphics API).
+
+- Windows coding conventions
+
+	Strange type definitions ("typedef"s) and variable names.
+	
+	Typedefs
+	
+		Windows headers contain a lot of typedefs (many of these are defined in the header file "WinDef.h").
+		
+		Integer type
+		
+			"BYTE"      (8 bits - Unsigned)
+			"WORD"      (16 bits - Unsigned)
+			"DWORD"     (32 bits - Unsigned)
+			
+			"INT32"     (32 bits - Signed)
+			"INT64"     (64 bits - Signed)
+			"LONG"      (32 bits - Signed)
+			"LONGLONG"  (64 bits - Signed)
+			
+			"UINT32"    (32 bits - Unsigned)
+			"UINT64"    (64 bits - Unsigned)
+			"ULONG"     (32 bits - Unsigned)
+			"ULONGLONG" (64 bits - Unsigned)
+			
+			Certain amount of redundancy (due to the history of the Windows APIs).
+			Fixed size (remain the same in both 32-bit and 64-applications).
+		
+		Boolean type
+		
+			"BOOL"
+			
+			A type alias for "int" (i.e. an integer type); distinct from C++ "bool" (and from other Boolean type representations).
+			"WinDef.h" defines two values: "FALSE" (0); "TRUE" (1) - Warning! Functions returning BOOL type can return any non-zero value to indicate Boolean truth; checking "if (result == TRUE)" (i.e. "if (result == 1)") may fail; check "if (result)" or "if (result != FALSE)" instead.
+		
+		Pointer type
+		
+			"TYPENAME* var;"  (dereference operator "*")
+			"PTYPENAME var;"  (prefix "P-" or "Pointer")
+			"LPTYPENAME var;" (prefix "LP-" or "Long Pointer" - a.k.a far pointer; needed on 16-bit Windows; preserved to port code to 32-bit Windows)
+			
+			Type of the form "pointer-to-X"
+			Today no distinction (all are equivalent) - Warning! Avoid using prefixes.
+		
+		Pointer precision type
+		
+			"DWORD_PTR"
+			
+			"INT_PTR"
+			"LONG_PTR"
+			
+			"UINT_PTR"
+			"ULONG_PTR"
+			
+			Size of a pointer (i.e. 32 bits wide in 32-bit applications, and 64 bits wide in 64-bit applications); fixed, determined at compile time.
+			Used where an existing 32-bit value was expanded to 64 bits on 64-bit Windows (e.g. cast an integer to a pointer, define variables for pointer arithmetic, or define loop counters (iterators) to iterate over the full range of bytes in memory buffers).
+	
+	Hungarian notation
+	
+		Add prefixes to variable names to provide additional information - Warning! Avoid using.
+		
+		Semantic information
+		
+			"i-"   ("index")
+			"cb-"  ("count of bytes")
+			"rw-"  ("row")
+			"col-" ("column")
+			
+			Intended use; avoid the accidental use of a variable in the wrong context.
+		
+		Type information
+		
+			"w-"  ("WORD")
+			"dw-" ("DWORD")
+
+- Characters and strings
+
+	Character encoding: ANSI vs. Unicode - Warning! For UI elements, file names, and so on (i.e. to localize an application).
+	
+		ANSI
+		
+			8-bit encoding
+		
+		Unicode (a.k.a. "wide" character)
+		
+			16-bit encoding (UTF-16 encoding: each character encoded as one or two 16-bit values).
+			Preferred (support all character sets and languages).
+	
+	Literals
+		
+		"char a = 'a';"          (character)
+		
+		"char *str = "foo";"     (character string)
+		
+		"wchar_t a = L'a';"      (wide-character)
+		
+		"wchar_t *str = L"foo";" (wide-character string)
+	
+	Typdefs
+	
+		"CHAR" - "char"                          (character)
+		
+		"PSTR" or "LPSTR" - "char*"              (character string)
+		"PCSTR" or "LPCSTR" - "const char*"
+		
+		"WCHAR" - "wchar_t"                      (wide-character; header file "WinNT.h")
+		
+		"PWSTR" or "LPWSTR" - "wchar_t*"         (wide-character string)
+		"PCWSTR" or "LPCWSTR" - "const wchar_t*"
+	
+	Functions
+	
+		Two parallel sets of APIs by string:
+		
+			ANSI strings: suffix "-A" in function name (e.g. "functionA")
+			Unicode strings: suffix "-W" in function name (e.g. "functionW")
+		
+		Internally, the ANSI version translates the string to Unicode at run time (i.e. less efficient).
+		Most recent Windows APIs typically have just a Unicode version.
+	
+	Macros and preprocessor symbols
+	
+		Functions: Windows headers define macros to resolve by preprocessor symbol.
+		
+			Macro "function" resolves to function "functionW" (Unicode) if preprocessor symbol "UNICODE"; otherwise, resolves to function "functionA" (ANSI).
+		
+		String literals: Windows SDK provides macros that map strings to Unicode or ANSI (useful to compile the same code for either ANSI or Unicode strings), depending on the platform:
+		
+			"TCHAR"              resolves to "wchar_t" (Unicode) if "UNICODE"; otherwise, resolves to "char"  (ANSI)
+			"TEXT()" (or "_T()") resolves to "L"foo""  (Unicode) if "UNICODE"; otherwise, resolves to ""foo"" (ANSI)
+		
+		Some headers use preprocessor symbol "UNICODE", others "_UNICODE" - Warning! Define always both symbols (Visual C++ sets them both by default when create a new project).
+
+- Window
+
+	TODO
