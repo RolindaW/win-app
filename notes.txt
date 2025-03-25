@@ -152,17 +152,19 @@
 	
 		Two parallel sets of APIs by string:
 		
-			ANSI strings: suffix "-A" in function name (e.g. "functionA")
-			Unicode strings: suffix "-W" in function name (e.g. "functionW")
+			ANSI strings: suffix "-A" in function name (e.g. "FunctionA")
+			Unicode strings: suffix "-W" in function name (e.g. "FunctionW")
 		
 		Internally, the ANSI version translates the string to Unicode at run time (i.e. less efficient).
 		Most recent Windows APIs typically have just a Unicode version.
 	
 	Macros and preprocessor symbols
 	
+		Warning! Avoid using generic-text mappings if build target always Unicode (because nonsense and non-standard - Windows OS specific)
+	
 		Functions: Windows headers define macros to resolve by preprocessor symbol.
 		
-			Macro "function" resolves to function "functionW" (Unicode) if preprocessor symbol "UNICODE"; otherwise, resolves to function "functionA" (ANSI).
+			Macro "Function" resolves to function "FunctionW" (Unicode) if preprocessor symbol "UNICODE"; otherwise, resolves to function "FunctionA" (ANSI).
 		
 		String literals: Windows SDK provides macros that map strings to Unicode or ANSI (useful to compile the same code for either ANSI or Unicode strings), depending on the platform:
 		
@@ -171,60 +173,11 @@
 		
 		Some headers use preprocessor symbol "UNICODE", others "_UNICODE" - Warning! Define always both symbols (Visual C++ sets them both by default when create a new project).
 
-- Handles
+- Handles - Warning! Different from (event) handlers
 
 	A number the OS uses to identify an object - Warning! Not a pointer (error on attemp to dereference)
 	Opaque data type (i.e. fully encapsulated - unknown internals - user-defined/built-in data type)
-	Handlers (and correponding objects) are created and operated (handler as a parameter) through functions
-
-- Window
-
-	Programming construct (central to Windows OS - hence its name):
-	
-		Occupy certain portion of the screen
-		May or not be visible
-		Know how to draw itself
-		Respond to user or OS events
-	
-	Type - by importance
-	
-		Application/Main window
-		
-			Non-client area: the frame (title bar, maximize/minimize buttons); managed by the OS
-			Client area: the area within the frame (other standard UI elements); managed by the program
-		
-		UI Control window: does not exist by itself - relative to application window (e.g. move together, notify events)
-	
-	Type - by role
-	
-		Parent window: contain - clipped ot boders - other (child) windows e.g. application window (parent) and UI control window (child)
-		Owner window: own other (owned) windows e.g. application window (owner) and modal dialog window (owned)
-	
-	Handle
-	
-		Windows are objects referenced by a handler - Warning! Not a C++ class
-		Data type: "HWND" (Handler Window)
-	
-	Functions
-	
-		Create: "CreateWindow", "CreateWindowEx"
-		Operate: "MoveWindow"
-	
-	Coordinates
-	
-		Unit of length: device-independent pixel (DIP/DP)
-		
-		Type - by space
-		
-			Warning! Origin (0,0) is always top-left corner of corresponding region
-			
-			Screen coordinates: relative to the screen
-			Window coordinates: relative to a window (frame included)
-			Client coordinates: relative to a window client area
-	
-	Window-procedure function
-	
-		Handle messages that the application receives from Windows when events occur
+	Handles (and correponding objects) are created and operated (handler as a parameter) through functions
 
 - Calling convention
 
@@ -249,7 +202,7 @@
 	
 		"WinMain" (ANSI)
 		
-			"int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow);"
+			"int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow)"
 			
 			"hInstance": handle to an instance or to a module
 			"hPrevInstance": no meaning (used in 16-bit Windows); now always 0
@@ -261,7 +214,7 @@
 		
 		"wWinMain" (Unicode - preferred)
 		
-			"int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow);"
+			"int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)"
 			
 			"pCmdLine": command-line arguments as Unicode string
 	
@@ -274,3 +227,142 @@
 	
 		Provide an implementation of "main" that calls either "WinMain" or "wWinMain"
 		Some more work inside "main" (e.g. call any static initializers before "wWinMain")
+
+- Window
+
+	Programming construct (central to Windows OS - hence its name):
+	
+		Occupy certain portion of the screen
+		May or not be visible
+		Know how to draw itself
+		Respond to user or OS events
+	
+	Type - by importance
+	
+		Application/Main window
+		
+			Non-client area: the frame (title bar, maximize/minimize buttons); managed by the OS
+			Client area: the area within the frame (other standard UI elements); managed by the program
+		
+		UI Control window: does not exist by itself - relative to application window (e.g. move together, notify events)
+	
+	Type - by role
+	
+		Parent window: contain - clipped ot boders - other (child) windows e.g. application window (parent) and UI control window (child)
+		Owner window: own other (owned) windows e.g. application window (owner) and modal dialog window (owned)
+	
+	Coordinates
+	
+		Unit of length: device-independent pixel (DIP/DP)
+		
+		Type - by space
+		
+			Warning! Origin (0,0) is always top-left corner of corresponding region
+			
+			Screen coordinates: relative to the screen
+			Window coordinates: relative to a window (frame included)
+			Client coordinates: relative to a window client area
+	
+	Window class - Warning! Not a C++ class
+	
+		Template (set of attributes) to create a window - Warning! Window creation require already registered window class
+		Determine (among others) default window procedure any individual window use to process its messages
+	
+	Windows are objects referenced by a handler (data type "HWND" - Handler Window)
+	
+	Functions
+	
+		Create: "CreateWindow", "CreateWindowEx"
+		Operate: "ShowWindow", "MoveWindow"
+	
+	Window procedure
+	
+		Handle messages that the application receives from OS (posted or sent) when events occur
+		
+		"LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)"
+		
+			"hWnd": handle to the window
+			"uMsg": message type
+			"wParam": additional message information (depend on message type - Warning! Sometimes not any data); usually a numeric value or a pointer to a structure
+			"lParam"
+			
+			"LRESULT": retval type; result of message processing (depend on message type)
+			"CALLBACK": data type for "__stdcall" calling convention for callback functions
+		
+		Helper macros to extract information from parameters
+		
+			LOWORD: extract low-order word (bits 0-15)
+			HIWORD
+			LOBYTE
+			HIBYTE
+		
+		Default window procedure "DefWindowProc"
+		
+			Define certain fundamental behavior (i.e. minimal functionality) shared by all windows - Warning! Application-defined window procedure should pass unhandled messages to "DefWindowProc" for default processing
+		
+		Bottlenecks
+		
+			Call functions outside window procedure to process individual messages (minimize local variable usage and prevent stack overflow) - Warning! It is possible to call window procedure (deeply-) recursively
+			Move work to another thread (avoid lengthly processing blocking main thread)
+
+- Events
+
+	Type - by origin
+	
+		User: someone interact with the program (e.g. mouse clicks, keystrokes, touch-screen gestures)
+		OS: anything "outside" program affect its behaviour (e.g. user plug in new hardware device, OS enter lowe-power state)
+
+- Message
+
+	Numeric code (to designate a particular event) - Warning! May have associated data
+
+- Message-passing model
+
+	Events can occur at any time (in almost any order) while program runing
+	OS communicate with application window (through per-window registered window-procedure) by passing messages (by window class)
+	
+		Post: put message into queue (then program dispatch to corresponding window-procedure)
+		Send: call corresponding window-procedure (i.e. bypass queue) - Warning! May cause problems if application communicates between windows
+
+- Message loop
+
+	Retrieve messages and dispatch to correct windows - Warning! An application my have several windows, each with own window procedure
+	
+		"GetMessage" - Warning! Block if queue empty - make program unresposive; create additional threads to run meanwhile if required
+		"TranslateMessage": related tp keyboard input 
+		"DispatchMessage": tell the OS which window procedure to call
+
+- Software
+
+	Program
+	
+		Set of instructions to perform specific task
+		Source code (interpreted programming language) vs. binary (compiled programming language)
+		Can have single or multiple processes
+		
+		Application - Warning! Term used interchangeably with program
+		
+			Program for the end user (i.e. end-user program)
+			Usually run in more (rather than service) controlled environment (e.g. sandbox)
+		
+		Service
+		
+			Program to support other programs (not end-user program)
+			Run on OS background
+	
+	Process
+	
+		Instance of a program being executed
+		Allocate memory for resources (code, data, files), address space - may be seen as a slice of space
+		Can have single or multiple threads (in single or multiple cores; share resources)
+	
+	Thread
+	
+		Basic unit of CPU utilization (program counter, stack, registers)
+		Contained inside a process
+		Schedule access to shared resources and address space - may be seen as a slice of time
+		Can split itself into multiple running tasks
+	
+	Task - Warning! Term used interchangeably with process
+	
+		Set of instructions loaded in memory
