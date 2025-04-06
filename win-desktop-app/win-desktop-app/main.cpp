@@ -23,6 +23,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	WNDCLASS wc = {};
 
+	wc.style = CS_OWNDC;  // Important! Private display device context
 	wc.lpfnWndProc = WndProc;  // Important! Function pointer to window-procedure function
 	wc.hInstance = hInstance;  // Important! Window class owner
 	wc.lpszClassName = WINDOW_CLASS_NAME;  // Important! Window class identifier
@@ -83,44 +84,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg)
 	{
-	case WM_SIZE:
-	{
-		int width = LOWORD(lParam);  // Macro to get the low-order word
-		int height = HIWORD(lParam);  // Macro to get the high-order word
-
-		// Important! Handle message in a separate function to make code more modular
-		// Warning! Use built-in multitasking facilities to avoid blocking current thread
-		OnSize(hWnd, (UINT)wParam, width, height);
-		break;
-	}
-
-	case WM_PAINT:
-	{
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);  // Important! All painting occurs here, between "BeginPaint()" and "EndPaint()"
-
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-		const TCHAR greeting[] = TEXT("Hello, there!");
-		TextOut(hdc, 5, 5, greeting, wcslen(greeting));  // Warning! Use "_tcslen" (from "tchar.h") for encoding compatibility
-
-		EndPaint(hWnd, &ps);
-		break;
-	}
-
-	case WM_CLOSE:
-		if (MessageBox(hWnd, TEXT("Quit application?"), TEXT("Exit!"), MB_OKCANCEL) == IDOK)
+		case WM_SIZE:
 		{
-			DestroyWindow(hWnd);  // Put "WM_DESTROY" message on the queue - Warning! Default behavior if message unhandled
+			int width = LOWORD(lParam);  // Macro to get the low-order word
+			int height = HIWORD(lParam);  // Macro to get the high-order word
+
+			// Important! Handle message in a separate function to make code more modular
+			// Warning! Use built-in multitasking facilities to avoid blocking current thread
+			OnSize(hWnd, (UINT)wParam, width, height);
+			break;
 		}
-		break;
 
-	case WM_DESTROY:  // Important! Message sent after window is removed from screen but before destruction occurs
-		PostQuitMessage(0);  // Put "WM_QUIT" message on the queue - Important! Cause "GetMessage()" return 0 i.e. break out of message loop
-		break;
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);  // Important! All painting occurs here, between "BeginPaint()" and "EndPaint()"
 
-	default:
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);  // Default window procedure for unhandled message
+			FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+
+			const TCHAR greeting[] = TEXT("Hello, there!");
+			TextOut(hdc, 5, 5, greeting, wcslen(greeting));  // Warning! Use "_tcslen" (from "tchar.h") for encoding compatibility
+
+			EndPaint(hWnd, &ps);
+			break;
+		}
+
+		case WM_CLOSE:
+			if (MessageBox(hWnd, TEXT("Quit application?"), TEXT("Exit!"), MB_OKCANCEL) == IDOK)
+			{
+				DestroyWindow(hWnd);  // Put "WM_DESTROY" message on the queue - Warning! Default behavior if message unhandled
+			}
+			break;
+
+		case WM_DESTROY:  // Important! Message sent after window is removed from screen but before destruction occurs
+			PostQuitMessage(0);  // Put "WM_QUIT" message on the queue - Important! Cause "GetMessage()" return 0 i.e. break out of message loop
+			break;
+
+		default:
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);  // Default window procedure for unhandled message
 	}
 
 	return 0;  // Indicate message handled

@@ -199,18 +199,6 @@
 		"LPCWSTR   lpszMenuName": menu
 		"LPCWSTR   lpszClassName" (required): window class identifier - Warning! No handle; must be unique within same process; keep as short as possible - maximum length 256 (because stored in OS private atom table)
 	
-	Device context
-	
-		Special set of values that applications use for drawing in their windows client area
-		OS requires a device context for each window on the display - Warning! OS maintains a pool - cache - of device contexts
-		A window may - or not - explicitly specifiy a device-context style
-		
-		No device-context style: use a device context from the pool; application must retrieve and initialize the device context before painting and free it after painting
-		Device-context style
-		
-			"CS_CLASSDC": allocate one device context to be shared by all windows in the class
-			"CS_OWNDC": allocate a unique device context for each window in the class; application retrieve context once and then use it for all subsequent painting
-	
 	References
 	
 		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-classes - Window class

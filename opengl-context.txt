@@ -1,0 +1,94 @@
+
+- Library
+
+	"wgl.h"
+
+- Device context (DC)
+
+	A structure that defines a set of graphic objects and their associated attributes, as well as the graphic modes that affect output
+	OS requires a device context for each window on the display
+	
+	Device independence: draw and print output on a variety of devices; software that supports this device independence is contained in two DLL
+	
+		Graphics Device Interface (GDI) - "Gdi.dll"
+		Device Driver - name depends on the device where the application draws output (e.g. "Vga.dll" to draw output on VGA display, "Epson9.dll" to print output on Epson FX-80 printer)
+	
+	Application must inform GDI to load particular device driver and to prepare the device for drawing/printing operations
+	These tasks are accomplished by creating and maintaining a device context
+	Warning! An application never has direct access to the DC (it operates on the structure indirectly by calling various functions)
+	
+	Device context layout: describe the order in which GDI objects and text are revealed (either left-to-right or right-to-left)
+	
+	Graphic objects
+	
+		Pen: line drawing; att: style, width, color; "GetDCPenColor"/"SetDCPenColor" function
+		Brush: painting and filling; att: style, color, pattern, origin; "GetDCBrushColor"/"SetDCBrushColor" function
+		Bitmap: copying or scrolling parts of the screen; att: size (bytes), dimensions (pixels), color-format, compression-scheme, other
+		Palette: defining the set of available colors; att: colors, size (number of colors)
+		Region: clipping and other operations; att: location, dimensions
+		Path: painting and drawing operations; att: shape
+		Font: text; att: typeface name, width, height, weight, character set, other
+		
+		OS automatically stores a set of default graphic objects in device context on create - Warning! There is no default bitmap or path
+		"GetCurrentObject" function: retrieve specified type graphic object from a device context
+		"GetObject" function: retrieve specified graphic object information (attributes)
+		"SelectObject" function: replace specified graphic object in a device context
+	
+	Graphic modes - Warning! OS-specific
+		
+		Background: define how background colors are mixed with existing window or screen colors for bitmap and text operations; "GetBkMode"/"SetBkMode" function: get/set default background graphics mode
+		Drawing: define how foreground colors are mixed with existing window or screen colors for pen, brush, bitmap, and text operations; "GetROP2"/"SetROP2" function
+		Mapping: define how graphics output is mapped from logical (or world) space onto the window, screen, or printer paper; "GetMapMode"/"SetMapMode" function
+		Polygon-fill: define how the brush pattern is used to fill the interior of complex regions; "GetPolyFillMode"/"SetPolyFillMode" function
+		Stretching: define how bitmap colors are mixed with existing window or screen colors when the bitmap is compressed (or scaled down); "GetStretchBltMode"/"SetStretchBltMode" function
+		
+		Specify how colors are mixed, where output appears, how output is scaled, other
+		OS automatically initializes a device context with default graphic modes
+	
+	Type
+	
+		Display device context: draw on video display
+		
+			Class device context
+			
+				"CS_CLASSDC" window class device-context style
+				One device context to be shared by all windows in the class
+				Warning! Strictly for compatibility with 16-bit Windows
+			
+			Common device context
+			
+				Not explicitly specified window class device-context style
+				Maintained in a special cache (or pool) by OS
+				Require release after use (because limited number and intended for shared use)
+				Any changes to default data are lost after release
+				Used in applications that perform infrequent drawing operations
+			
+			Private device context
+			
+				"CS_OWNDC" window class device-context style
+				Private unique device context for each window in the class
+				Need not to be released after used i.e. retrieve context once and then use it for all subsequent painting
+				Retain any changes to default data even after release
+				Used in applications that perform numerous drawing operations
+				"GetDC" function
+			
+			Window device context
+			
+				Enable drawing anywhere in a window - including non-client area
+				Warning! Intended for windows with custom non-client area
+			
+			Parent device context
+			
+				"CS_PARENTDC" window class device-context style
+				Speed up to set up a window clipping region
+				Warning! Intended for child windows only
+		
+		Printer device context: draw on printer (e.g. dot-matrix, ink-jet, laser) or plotter
+		Memory (or compatible) device context: draw on bitmap - rather than sending output to an actual device (virtual device)
+		Information device context: retrieve default device data
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/gdi/device-contexts - Device context
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/about-window-classes#classes-and-device-contexts - Window class and device context
+		https://learn.microsoft.com/en-us/windows/win32/gdi/obtaining-a-private-display-device-context - Obtain a private display device context
