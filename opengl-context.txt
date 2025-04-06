@@ -1,7 +1,16 @@
 
 - Library
-
-	"wgl.h"
+	
+	"GL/gl.h" - core OpenGL functions
+	"GL/glu.h" - OpenGL utility library
+	"GL/glaux.h" - OpenGL programming guida auxiliary library
+	"wingdi.h" - WGL functions; Windows functions that support Microsoft's implementation of OpenGL in Windows
+	"C:/Windows/System32/opengl32.dll" - Windows OpenGL implementation (support up to version 1.1)
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/gdi/windows-gdi
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/
 
 - Device context (DC)
 
@@ -91,4 +100,54 @@
 	
 		https://learn.microsoft.com/en-us/windows/win32/gdi/device-contexts - Device context
 		https://learn.microsoft.com/en-us/windows/win32/winmsg/about-window-classes#classes-and-device-contexts - Window class and device context
+		https://learn.microsoft.com/en-us/windows/win32/gdi/display-devices - Display device context
+		https://learn.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts - Private display device context
 		https://learn.microsoft.com/en-us/windows/win32/gdi/obtaining-a-private-display-device-context - Obtain a private display device context
+
+- Pixel format descriptor
+	
+	Describe the properties of the default framebuffer that a device context should have
+	
+	Process to obtain it
+	
+		Fill out a structure that describes required features ("PIXELFORMATDESCRIPTOR" structure - "wingdi.h")
+		Give it to a function that will return a number that represents the closest match that it can find in the list of supported pixel formats ("ChoosePixelFormat" function - "wingdi.h")
+		Set that number to be the pixel format of the device context ("SetPixelFormat" function - "wingdi.h")
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-choosepixelformat
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-setpixelformat		
+
+- OpenGL context
+
+	Store all of the state associated with an instance of OpenGL
+	Represent the (potentially visible) default framebuffer that rendering commands will draw to (when not drawing to a framebuffer object)
+	Each context has its own set of OpenGL objects; independent of those from other contexts; (most) can be shared with other contexts - Warning! Object sharing must be made explicitly
+	
+	A context must be current in order for any OpenGL command to work; all OpenGL commands affect the state of whichever context is current
+	Current context is a thread-local variable - Warning! Single context cannot be current in multiple threads at the same time
+	
+	References
+	
+		https://www.khronos.org/opengl/wiki/OpenGL_Context
+
+- Create basic OpenGl device context (using WGL functions)
+
+	TODO: Notes here
+	
+	References
+	
+		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - OpenGL context
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcreatecontext - Create OpenGL context
+		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl - OpenGL
+		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl-on-windows-nt--windows-2000--and-windows-95-98 - OpenGL on Windows
+		https://learn.microsoft.com/en-us/windows/win32/opengl/using-opengl-on-windows-nt-2000-and-windows-95-98 - Using OpenGL on Windows
+		https://learn.microsoft.com/en-us/windows/win32/opengl/reference-for-win-32-extensions-to-opengl - Reference for Windows extensions to OpenGL: WGL functions, Windows functions and structures
+		https://learn.microsoft.com/en-us/windows/win32/opengl/rendering-contexts - Rendering context
+		https://learn.microsoft.com/en-us/windows/win32/opengl/pixel-formats - Pixel format
+
+- Create advanced OpenGL device context (using OpenGL extensions functions - Warning! Dummy OpenGL device context required)
+
+	TODO: Notes here
