@@ -1,0 +1,319 @@
+
+- Library
+
+	"windows.h": provide access to Windows API; header-only library; only include references to other libraries (e.g. "winuser.h")
+	"winuser.h": Windows API - Windows and messages
+	
+	References
+
+		https://learn.microsoft.com/en-us/windows/win32/learnwin32/learn-to-program-for-windows - Get started with Win32 and C++
+		https://learn.microsoft.com/en-us/cpp/windows/walkthrough-creating-windows-desktop-applications-cpp?view=msvc-170 - Create a traditional Windows desktop application
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/using-windows - Using windows
+
+- "WinMain" application entry point
+
+	User-provided entry-point function for graphical (desktop, as console is text-based) Windows-based applications
+	Resposible for initialize application, create main window (register corresponding window class), enter message retrieval-and-dispatch loop
+	
+		"WinMain" (ANSI)
+		
+			"int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow)"
+			
+			"HINSTANCE hInstance": application current instance handle; assigned by OS
+			"HINSTANCE hPrevInstance": application previous instance handle; always 0 - NULL (no meaning; was used in 16-bit Windows)
+			"PSTR      lpCmdLine": command-line arguments as ANSI string
+			"int       nCmdShow": flag to control how application main window is shown (minimized, maximized, normal)
+			
+			"int": not used by OS (can be used as status code to other programs)
+			"WINAPI": "__stdcall" calling convention typedef
+		
+		"wWinMain" (Unicode)
+		
+			"int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)"
+			
+			"PWSTR pCmdLine": command-line arguments as Unicode string
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-winmain - WinMain function
+		https://learn.microsoft.com/en-us/windows/win32/learnwin32/winmain--the-application-entry-point - The WinMain application entry point
+		https://learn.microsoft.com/en-us/cpp/windows/walkthrough-creating-windows-desktop-applications-cpp?view=msvc-170#where-code-starts-running-in-a-windows-desktop-application
+
+- Window
+
+	Rectangular area of the screen
+	Display output (text, graphics)
+	Receive input (mouse, keyboard) from the user - Warning! Only one window at a time
+	Respond to OS events
+	
+- Desktop window
+	
+	Automatically created by OS on start
+	Paint screen background
+	Serve as base for all windows displayed by all applications
+	
+- Application window
+	
+	Any window created by an application - Warning! OS associate a taskbar button (icon and title) on create top-level window
+	
+	Components
+	
+		Non-client area: window frame; managed by OS
+		
+			Title bar
+			System/Window/Control menu - Warning! Displayed by left-clicking application title bar icon
+			Menu bar
+			Minimize, maximize, restore, close buttons
+			Border - Warning! Sizing vs. Non-sizing
+			Horizontal, vertical scroll bars
+		
+		Client area: space within window frame; display output; managed by application
+	
+	Coordinates
+	
+		Unit of length: device-independent pixel (DIP/DP)
+		
+		Warning! Origin (0,0) is always top-left corner of corresponding region
+		
+		Screen coordinates: relative to the screen
+		Window coordinates: relative to a window (frame included)
+		Client coordinates: relative to a window client area
+		
+	Warning! Following type classifications are not mutually exclusive and neither - sometimes - corresponding subtypes (e.g. an overlapped window may be owner, parent, active, foreground, top-most, top-level at same time)
+	Warning! In some cases it would be more accurate to call them property rather than type (e.g. type by status - visible property of a window)
+	
+	Type - by role
+	
+		Overlapped window
+		
+			Top-level window (i.e. non-child window)
+			Serve as application main window
+			Style: "WS_OVERLAPPED", "WS_OVERLAPPEDWINDOW"
+			
+			Main window
+		
+				Primary interface between user and application - Warning! The minimum every graphical Windows-based application must create
+				Typically include all components
+		
+		Pop-up window
+		
+			Special type of overlapped window that appear outside application main window
+			Style: "WS_POPUP", "WS_POPUPWINDOW" - Warning! Use along "WS_CAPTION" to include title bar
+			
+			Dialog box window - Warning! Commonly referred to as dialog box
+		
+				Temporary window to retrieve additional user input
+				Contain one or more UI control window; typically not include menu bar, minimize and maximize buttons or scroll bars
+				Modal vs. Modeless
+			
+			Message box window - Warning! Commonly referred to as message box
+			
+				Special dialog box window
+				Display messages (info, warning, error) or prompt for simple input
+		
+		Child window
+		
+			Confined to parent window client area (divide it into functional areas) - Warning! Become desktop window child if parent not specified
+			Only include client area (unless explicitly requested)
+			Style: "WS_CHILD", "WS_CHILDWINDOW" - Warning! Incompatible with "WS_POPUP"
+			
+			Control window - Warning! Commonly referred to as control
+			
+				Enable user interaction (text, button)
+				Always used in conjunction with another window
+	
+	Type - by relationship
+	
+		Foreground window
+		
+			Active window the user is interacting with
+			Only one at a time
+			Result of "GetForegroundWindow" function - Warning! OS-scope i.e. may be property of different process/application
+		
+		Background window
+		
+		Owner window
+		Owned window: non-child window that specifies an owner window on create
+		
+		Parent window
+		Child window
+		
+		Z-order: window position in a stack of overlapping windows; oriented in Z-axis - extending outward from screen (window at the top overlaps all others)
+		
+			Top-most window: display above all other non-top-most windows (even if active or foreground window) - Warning! Multiple may exist within an application
+			Non-top-most window
+			
+			Top-level window (non-child window): has no parent (actually desktop window) - Warning! Multiple may exist within an application
+			Non-top-level window
+	
+	Type - by status
+	
+		Active window
+		
+			Top-level window the user is interacting with - Warning! Only top-level window can be active window - even on behalf of correponding child window the user may be interacting with
+			Only one at a time
+			Result of "GetActiveWindow" function - Warning! Process-scope i.e. return NULL if active window is property of different process/application
+		
+		Enabled window
+		Disabled window: not receive user input (but receive messages from other windows, other applications and OS)
+		
+		Visible window
+		Hidden window
+		
+		Maximized window
+		Minimized window
+		Restored window
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/windows - Window
+		https://learn.microsoft.com/en-us/windows/win32/learnwin32/what-is-a-window- - What is a window?
+		https://learn.microsoft.com/en-us/windows/win32/controls/window-controls - Control window
+		https://learn.microsoft.com/en-us/windows/win32/dlgbox/dialog-boxes - Dialog box window
+		https://devblogs.microsoft.com/oldnewthing/20081006-00/?p=20643
+
+- Window class - Warning! May be seen as a window family; nothing to do with class/object - in fact it is stored in a structure
+
+	Set of attributes (window procedure, styles, other) the OS uses as a template to create a window
+	Define the default behavior of windows belonging to the class
+	Every window is member of a window class
+	A window class must be registered before a window of that class can be created ("RegisterClass" function) - Warning! Process-specific (provided instance handle)
+	It is possible changing attributes of already registered local/global application window class ("SetClassLong" function)
+	
+	Type - Warning! Class location (by OS) allow override (by priority)
+	
+		System class: registered by OS; many available for all processes (e.g. "Button", "ComboBox", "Edit") - others used only internally by OS; each application receive own copy; lowest priority
+		Application global class: registered by EXE or DLL for shared use (with other modules in same process)
+		Application local class: registered by EXE or DLL for own use; typically only one (for application main window); highest priority
+	
+	"WNDCLASS" structure - Warning! Use corresponding typedef/function variants to create a window with an extended window style: "WNDCLASSEX", "RegisterClassEx", "CreateWindowEx"
+	
+		"UINT      style": window class style; multiple styles can be combined - Warning! Allow to specify a device-context style
+		"WNDPROC   lpfnWndProc" (required): window procedure pointer
+		"int       cbClsExtra": extra class memory byte number
+		"int       cbWndExtra": extra window memory byte number
+		"HINSTANCE hInstance" (required): window class owner (EXE or DLL) instance handle - Warning! Must contain provided window procedure
+		"HICON     hIcon": large/small icon
+		"HCURSOR   hCursor": cursor shape
+		"HBRUSH    hbrBackground": background brush (used to clear client area on request)
+		"LPCWSTR   lpszMenuName": menu
+		"LPCWSTR   lpszClassName" (required): window class identifier - Warning! No handle; must be unique within same process; keep as short as possible - maximum length 256 (because stored in OS private atom table)
+	
+	Device context
+	
+		Special set of values that applications use for drawing in their windows client area
+		OS requires a device context for each window on the display - Warning! OS maintains a pool - cache - of device contexts
+		A window may - or not - explicitly specifiy a device-context style
+		
+		No device-context style: use a device context from the pool; application must retrieve and initialize the device context before painting and free it after painting
+		Device-context style
+		
+			"CS_CLASSDC": allocate one device context to be shared by all windows in the class
+			"CS_OWNDC": allocate a unique device context for each window in the class; application retrieve context once and then use it for all subsequent painting
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-classes - Window class
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassw - "WNDCLASS" structure
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-class-styles - Window class style
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerclassa - "RegisterClass" function
+
+- Window object - Warning! Not a C++ class
+
+	"CreateWindow" function - Warning! Send "WM_CREATE" before return
+	
+		"CreateWindow(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)"
+		
+		"LPCSTR    lpClassName": window class name
+		"LPCSTR    lpWindowName": window name (it depends on being created window type)
+		"DWORD     dwStyle": window style; multiple styles can be combined - Warning! Must specify window type (i.e. overlapped, pop-up or child)
+		"int       x"
+		"int       y"
+		"int       nWidth"
+		"int       nHeigh"
+		"HWND      hWndParent": parent or owner window handle
+		"HMENU     hMenu"
+		"HINSTANCE hInstance": window owner instance handle
+		"LPVOID    lpParam": window custom data; "CREATESTRUCT" structure - Warning! Pointed to by the "lParam" parameter of "WM_CREATE" message
+		
+		"HWND": window handle
+	
+	"ShowWindow" function: window is not displayed by default on create (unless specified - "WS_VISIBLE" window style)
+	"UpdateWindow" function: send "WM_PAINT" message to window
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-createwindowa - "CreateWindow" function
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles - Window style
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow - "ShowWindow" function
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatewindow - "UpdateWindow" function
+
+- Window procedure
+
+	Handle messages that the application receives from OS (posted or sent) when events occur
+	
+	"LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)"
+	
+		"hWnd": handle to the window
+		"uMsg": message type
+		"wParam": additional message information (depend on message type - Warning! Sometimes not any data); usually a numeric value or a pointer to a structure
+		"lParam"
+		
+		"LRESULT": retval type; result of message processing (depend on message type)
+		"CALLBACK": data type for "__stdcall" calling convention for callback functions
+	
+	Helper macros to extract information from parameters
+	
+		LOWORD: extract low-order word (bits 0-15)
+		HIWORD
+		LOBYTE
+		HIBYTE
+	
+	Default window procedure "DefWindowProc"
+	
+		Define certain fundamental behavior (i.e. minimal functionality) shared by all windows - Warning! Application-defined window procedure should pass unhandled messages to "DefWindowProc" for default processing
+	
+	Bottlenecks
+	
+		Call functions outside window procedure to process individual messages (minimize local variable usage and prevent stack overflow) - Warning! It is possible to call window procedure (deeply-) recursively
+		Move work to another thread (avoid lengthly processing blocking main thread)
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-procedures - Window procedure
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-wndproc - "WNDPROC" callback function
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-defwindowproca - "DefWindowProc" function
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-callwindowproca - "CallWindowProc" function
+
+- Events
+
+	Type - by origin
+	
+		User: someone interact with the program (e.g. mouse clicks, keystrokes, touch-screen gestures)
+		OS: anything "outside" program affect its behaviour (e.g. user plug in new hardware device, OS enter lowe-power state)
+
+- Message
+
+	Numeric code (to designate a particular event) - Warning! May have associated data
+
+- Message-passing model
+
+	Events can occur at any time (in almost any order) while program runing
+	OS communicate with application window (through per-window registered window procedure) by passing messages (by window class)
+	
+		Post: put message into queue (then program dispatch to corresponding window procedure)
+		Send: call corresponding window procedure (i.e. bypass queue) - Warning! May cause problems if application communicates between windows
+
+- Message loop
+
+	Retrieve messages and dispatch to correct windows - Warning! An application may have several windows, each with own window procedure
+	
+		"GetMessage" - Warning! Block if queue empty - make program unresponsive; create additional threads to run meanwhile if required
+		"TranslateMessage": related to keyboard input 
+		"DispatchMessage": tell the OS which window procedure to call
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getmessage - "GetMessage" function
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translatemessage - "TranslateMessage" function
+		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-dispatchmessage - "DispatchMessage" function
