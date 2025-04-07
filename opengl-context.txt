@@ -1,20 +1,25 @@
 
 - Library
 	
-	"GL/gl.h" - core OpenGL functions
-	"GL/glu.h" - OpenGL utility library
-	"GL/glaux.h" - OpenGL programming guida auxiliary library
-	"wingdi.h" - WGL functions; Windows functions that support Microsoft's implementation of OpenGL in Windows
-	"C:/Windows/System32/opengl32.dll" - Windows OpenGL implementation (support up to version 1.1)
+	"GL/gl.h" - Core OpenGL function declarations
+	"GL/glu.h" - OpenGL Utility (GLU) library
+	"GL/glaux.h" - OpenGL Programming Guide Auxiliary (GLAUX) library
+	"wingdi.h" - WGL functions and Windows functions that support Microsoft OpenGL implementation for Windows - among others
+	"opengl32.dll" ("C:\Windows\System32") - Microsoft OpenGL implementation for Windows (support up to version 1.1)
+	"opengl.dll" - Silicon Graphics OpenGL implementation for Windows
 	
 	References
 	
 		https://learn.microsoft.com/en-us/windows/win32/gdi/windows-gdi
 		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/
+		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl - OpenGL
+		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl-on-windows-nt--windows-2000--and-windows-95-98 - OpenGL on Windows
+		https://learn.microsoft.com/en-us/windows/win32/opengl/using-opengl-on-windows-nt-2000-and-windows-95-98 - Using OpenGL on Windows
+		https://learn.microsoft.com/en-us/windows/win32/opengl/reference-for-win-32-extensions-to-opengl - Reference for Windows extensions to OpenGL: WGL functions, Windows functions and structures
 
 - Device context (DC)
 
-	A structure that defines a set of graphic objects and their associated attributes, as well as the graphic modes that affect output
+	A set of graphic objects (and their associated attributes) and the graphic modes that affect output
 	OS requires a device context for each window on the display
 	
 	Device independence: draw and print output on a variety of devices; software that supports this device independence is contained in two DLL
@@ -30,6 +35,8 @@
 	
 	Graphic objects
 	
+		Warning! OS automatically stores a set of default graphic objects in a device context on create (no default bitmap or path)
+		
 		Pen: line drawing; att: style, width, color; "GetDCPenColor"/"SetDCPenColor" function
 		Brush: painting and filling; att: style, color, pattern, origin; "GetDCBrushColor"/"SetDCBrushColor" function
 		Bitmap: copying or scrolling parts of the screen; att: size (bytes), dimensions (pixels), color-format, compression-scheme, other
@@ -38,62 +45,75 @@
 		Path: painting and drawing operations; att: shape
 		Font: text; att: typeface name, width, height, weight, character set, other
 		
-		OS automatically stores a set of default graphic objects in device context on create - Warning! There is no default bitmap or path
-		"GetCurrentObject" function: retrieve specified type graphic object from a device context
-		"GetObject" function: retrieve specified graphic object information (attributes)
+		"GetCurrentObject" function: retrieve the graphic object of specified type from a device context
+		"GetObject" function: retrieve information (attributes) of specified graphic object
 		"SelectObject" function: replace specified graphic object in a device context
 	
-	Graphic modes - Warning! OS-specific
+	Graphic modes (specify how colors are mixed, where output appears, how output is scaled, other)
 		
-		Background: define how background colors are mixed with existing window or screen colors for bitmap and text operations; "GetBkMode"/"SetBkMode" function: get/set default background graphics mode
+		Warning! OS automatically initializes a device context with default graphic modes
+		
+		Background: define how background colors are mixed with existing window or screen colors for bitmap and text operations; "GetBkMode"/"SetBkMode" function (get/set - default - background graphics mode)
 		Drawing: define how foreground colors are mixed with existing window or screen colors for pen, brush, bitmap, and text operations; "GetROP2"/"SetROP2" function
 		Mapping: define how graphics output is mapped from logical (or world) space onto the window, screen, or printer paper; "GetMapMode"/"SetMapMode" function
 		Polygon-fill: define how the brush pattern is used to fill the interior of complex regions; "GetPolyFillMode"/"SetPolyFillMode" function
 		Stretching: define how bitmap colors are mixed with existing window or screen colors when the bitmap is compressed (or scaled down); "GetStretchBltMode"/"SetStretchBltMode" function
-		
-		Specify how colors are mixed, where output appears, how output is scaled, other
-		OS automatically initializes a device context with default graphic modes
 	
 	Type
 	
 		Display device context: draw on video display
 		
+			Warning! OS maintains a special display device context cache (or pool) for common, window and parent display device contexts
+			
+				Require release after use (because limited number and intended for shared use)
+				Any changes to default data (graphic objects/modes attributes) are not permanent (lost after release)
+		
 			Class device context
 			
 				"CS_CLASSDC" window class device-context style
 				One device context to be shared by all windows in the class
+				Application must explicitly retrieve the class display device context for a window each time it must draw in it
+				Need not to be released after use
+				Retain any changes to default data even after release
+				"GetDC" function - Warning! Use "GetDCEx" function to force OS to return a common display device context for a window with a class display device context
 				Warning! Strictly for compatibility with 16-bit Windows
 			
 			Common device context
 			
 				Not explicitly specified window class device-context style
-				Maintained in a special cache (or pool) by OS
-				Require release after use (because limited number and intended for shared use)
-				Any changes to default data are lost after release
+				Retrieved from OS cache
+				Client coordinates
 				Used in applications that perform infrequent drawing operations
+				"GetDC"/"ReleaseDC" or "BeginPaint"/"EndPaint" functions
 			
 			Private device context
 			
 				"CS_OWNDC" window class device-context style
-				Private unique device context for each window in the class
-				Need not to be released after used i.e. retrieve context once and then use it for all subsequent painting
+				Unique device context for each window in the class
+				Retrieve context once and then use it for all subsequent painting
+				Need not to be released after use
 				Retain any changes to default data even after release
 				Used in applications that perform numerous drawing operations
-				"GetDC" function
+				"GetDC" function - Warning! Use "GetDCEx" function to force OS to return a common display device context for a window with a private display device context (useful for carrying out quick touch-ups to a window without changing the current attribute values of the private display device context)
 			
 			Window device context
 			
+				Warning! Any window can request it
+				Retrieved from OS cache
+				Window coordinates
 				Enable drawing anywhere in a window - including non-client area
+				"GetWindowDC" - or "GetDCEx" (with DCX_WINDOW option specified) - / "ReleaseDC" functions
 				Warning! Intended for windows with custom non-client area
 			
 			Parent device context
 			
 				"CS_PARENTDC" window class device-context style
+				Retrieved from OS cache
 				Speed up to set up a window clipping region
 				Warning! Intended for child windows only
 		
 		Printer device context: draw on printer (e.g. dot-matrix, ink-jet, laser) or plotter
-		Memory (or compatible) device context: draw on bitmap - rather than sending output to an actual device (virtual device)
+		Memory (or compatible) device context: draw on bitmap (i.e. virtual device) - rather than sending output to an actual device
 		Information device context: retrieve default device data
 	
 	References
@@ -104,50 +124,237 @@
 		https://learn.microsoft.com/en-us/windows/win32/gdi/private-display-device-contexts - Private display device context
 		https://learn.microsoft.com/en-us/windows/win32/gdi/obtaining-a-private-display-device-context - Obtain a private display device context
 
-- Pixel format descriptor
+- Microsoft implementation of OpenGL on Windows
+
+	Core OpenGL commands - Warning! Support up to OpenGL 1.1 version
 	
-	Describe the properties of the default framebuffer that a device context should have
+		Warning! Generic implementation has many limitations (e.g. no support for some pixel formats - stereoscopic images, alpha bitplanes and auxiliary buffers)
+		
+		"GL/gl.h" library - "gl" prefix function names: core OpenGL function declarations
+		"opengl32.dll" library: links with applications to use OpenGL; when an application is run, "opengl32.dll" loads and checks the Windows registry for a GL driver (it then loads the driver if it finds one)
 	
-	Process to obtain it
+	OpenGL Utility (GLU) library
 	
-		Fill out a structure that describes required features ("PIXELFORMATDESCRIPTOR" structure - "wingdi.h")
-		Give it to a function that will return a number that represents the closest match that it can find in the list of supported pixel formats ("ChoosePixelFormat" function - "wingdi.h")
-		Set that number to be the pixel format of the device context ("SetPixelFormat" function - "wingdi.h")
+		Complement core OpenGL functions
+		Manage texture support, coordinate transformation, polygon tessellation, rendering spheres, cylinders and disks, NURBS (Non-Uniform Rational B-Spline) curves and surfaces and error handling
+		"GL/glu.h" library - "glu" prefix function names - Warning! Not recommended - use custom or third-party libraries instead
+	
+	OpenGL Programming Guide Auxiliary (GLAUX) library
+	
+		Platform-independent library - Warning! Do not use in production application - intended for "OpenGL Programming Guide"
+		Manage windows, handle input events, draw classic 3-D objects, manage a background process and run a program
+	
+	WGL functions
+	
+		Connect OpenGL to Windows OS windowing system - Warning! Analogous to GLX extensions (connect OpenGL to X Window System - Linux OS / Mac OS)
+		Manage rendering contexts, display lists, extension functions and font bitmaps
+		"wingdi.h" library - "wgl" prefix function names
+		
+			(rendering context)
+			"wglCreateContext" function: create a new rendering context
+			"wglGetCurrentContext" function: obtain a handle to the current rendering context of a thread
+			"wglGetCurrentDC" function: obtain a handle to the device context related to theh current rendering context of a thread
+			"wglMakeCurrent" function: set a thread current rendering context
+			"wglDeleteContext" function: delete a rendering context
+			
+			(font and text)
+			"wglUseFontBitmaps" function
+			"wglUseFontOutlines" function
+			
+			(layer planes)
+			"wglCopyContext" function
+			"wglCreateLayerContext" function
+			"wglDescribeLayerPlane" function
+			"wglSetLayerPaletteEntries" function
+			"wglGetLayerPaletteEntries" function
+			"wglRealizeLayerPalette" function
+			"wglSwapLayerBuffers" function
+			
+			(display-list space)
+			"wglShareLists" function
+			
+			(extension functions)
+			"wglGetProcAddress" function
+			
+			"wglSwapMultipleBuffers" function - Warning! No (un)official documentation
+	
+	Windows functions for pixel formats and double buffering
+	
+		Support per-window pixel formats and window double buffering (for smooth image changes) - Warning! Apply only to OpenGL graphics windows
+		"wingdi.h" library
+		
+			(pixel format)
+			"PIXELFORMATDESCRIPTOR" structure
+			"ChoosePixelFormat" function: obtain the index of the pixel format supported by a device context that is the closest match to a specified pixel format description
+			"GetPixelFormat" function: obtain the pixel format index of the current pixel format of a device context
+			"SetPixelFormat" function: set a device context current pixel format to the pixel format specified by a pixel format index
+			"DescribePixelFormat" function: fill a "PIXELFORMATDESCRIPTOR" structure with the pixel format properties specified by a device context and a pixel format index
+			"GetEnhMetaFilePixelFormat" function
+			
+			(buffer)
+			"SwapBuffers" function: copy the contents of an off-screen buffer to an on-screen buffer
 	
 	References
 	
-		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor
-		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-choosepixelformat
-		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-setpixelformat		
+		https://learn.microsoft.com/en-us/windows/win32/opengl/components
+		https://learn.microsoft.com/en-us/windows/win32/opengl/header-files
+		https://learn.microsoft.com/en-us/windows/win32/opengl/guide-to-documentation
 
-- OpenGL context
+- Pixel format
 
+	Describe the properties of a device context default framebuffer (i.e. drawing surface of a video display)
+	
+	"PIXELFORMATDESCRIPTOR" structure convey pixel format data - Warning! Microsoft OpenGL implementation for Windows
+	
+		"WORD  nSize": structure size
+		"WORD  nVersion": structure version number - Warning! Always "1"
+		"DWORD dwFlags": pixel buffer properties; multiple flags can be combined
+		"BYTE  iPixelType": pixel data type (RGBA - "PFD_TYPE_RGBA" - or color-index - "PFD_TYPE_COLORINDEX" - pixels)
+		"BYTE  cColorBits": number of color bitplanes in each color buffer (RGBA pixel type - color buffer size, excluding the alpha bitplanes; color-index pixel type - color-index buffer size)
+		"BYTE  cRedBits": number of red bitplanes in each RGBA color buffer (color bits)
+		"BYTE  cRedShift": shift count for red bitplanes in each RGBA color buffer
+		"BYTE  cGreenBits"
+		"BYTE  cGreenShift"
+		"BYTE  cBlueBits"
+		"BYTE  cBlueShift"
+		"BYTE  cAlphaBits": alpha buffer - Warning! Not supported by Microsoft OpenGL implementation for Windows
+		"BYTE  cAlphaShift"
+		"BYTE  cAccumBits": total number of bitplanes in the accumulation buffer
+		"BYTE  cAccumRedBits": number of red bitplanes in the accumulation buffer
+		"BYTE  cAccumGreenBits"
+		"BYTE  cAccumBlueBits"
+		"BYTE  cAccumAlphaBits"
+		"BYTE  cDepthBits": depth buffer (or z-buffer - Z-axis) depth
+		"BYTE  cStencilBits": stencil buffer depth
+		"BYTE  cAuxBuffers": number of auxiliary buffers - Warning! Not supported by Microsoft OpenGL implementation for Windows
+		"BYTE  iLayerType" - Warning! Ignore - no longer used
+		"BYTE  bReserved": number of overlay and underlay planes
+		"DWORD dwLayerMask" - Warning! Ignore - no longer used
+		"DWORD dwVisibleMask": transparent color or index of an underlay plane (RGBA pixel type - transparent RGB color value; color-index pixel type - transparent index value)
+		"DWORD dwDamageMask" - Warning! Ignore - no longer used
+	
+	A device context can support several pixel formats (identified with consecutive one-based index values) - Warning! A device context can have just one current pixel format
+	Each window has own current pixel format - Warning! Limited to OpenGL windows
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/opengl/pixel-formats - Pixel format
+		https://learn.microsoft.com/en-us/windows/win32/opengl/pixel-format-tasks - Pixel format tasks
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-pixelformatdescriptor - "PIXELFORMATDESCRIPTOR" structure
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-choosepixelformat - "ChoosePixelFormat" function
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-setpixelformat - "SetPixelFormat" function
+
+- Framebuffer
+
+	Memory buffer to store the pixels that make up an image
+	
+	A set of logical buffers
+	
+		Color buffer - a set of logical buffers
+		
+			Warning! Left and right color buffers are used for stereoscopic images
+			
+			Front-left buffer
+			Front-right buffer
+			Back-left buffer
+			Back-right buffer
+			Auxiliary buffers (n)
+		
+		Depth buffer
+		Accumulation buffer
+		Stencil buffer
+
+- (OpenGL) Rendering context
+
+	A port through which all OpenGL commands pass
 	Store all of the state associated with an instance of OpenGL
 	Represent the (potentially visible) default framebuffer that rendering commands will draw to (when not drawing to a framebuffer object)
-	Each context has its own set of OpenGL objects; independent of those from other contexts; (most) can be shared with other contexts - Warning! Object sharing must be made explicitly
+	Link OpenGL to the Windows OS windowing system
+	Each rendering context has its own set of OpenGL objects; independent of those from other rendering contexts; (most) can be shared with other rendering contexts - Warning! Object sharing must be made explicitly
 	
-	A context must be current in order for any OpenGL command to work; all OpenGL commands affect the state of whichever context is current
-	Current context is a thread-local variable - Warning! Single context cannot be current in multiple threads at the same time
+	Created from a device context (thus makes it suitable to draw on the device referenced by the device context)
+	Get same pixel format as the device context - Warning! Set required pixel format to the device context beforehand
+	
+	Current rendering context
+	
+		Warning! Making a rendering context current creates an association between supplied rendering context and device context
+		
+			Device context not need to be the same as when created - Warning! Require same device and pixel format
+			Subsequent OpenGL calls made by corresponding thread are made through the rendering context and are drawn on the device referenced by the device context
+		
+		A thread must have a current rendering context (thread-local variable) to make OpenGL calls - Warning! Can have only one current rendering context at a time
+		A rendering context can be current to only one thread at a time
+		A window can have multiple rendering contexts drawing to it at one time
+	
+	Device context vs. Rendering context
+
+		(device context)
+		Contain information pertinent to the graphics component (GDI) of Windows
+		Must be explicitly specified in a GDI call
+		
+		(rendering context)
+		Contain information pertinent to OpenGL
+		Implicit in an OpenGL call
 	
 	References
 	
 		https://www.khronos.org/opengl/wiki/OpenGL_Context
+		https://learn.microsoft.com/en-us/windows/win32/opengl/rendering-contexts - Rendering context
+		https://learn.microsoft.com/en-us/windows/win32/opengl/rendering-context-tasks - Rendering context tasks
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcreatecontext - "wglCreateContext" function
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglmakecurrent - "wglMakeCurrent" function
 
-- Create basic OpenGl device context (using WGL functions)
+- Double buffering
 
-	TODO: Notes here
+	Warning! Double buffering is a pixel-format property ("PFD_DOUBLEBUFFER" flag)
+	
+	Application draw pixels to back buffer; copy the contents of the back buffer to the front buffer ("SwapBuffers" function) when the image is ready for display
+	
+	2 available color buffers
+		
+		Front buffer (or on-screen buffer): target of drawing commands
+		Back buffer (or off-screen buffer): displayed on the screen
+	
+	Enable smooth image changes (important for animated images)
 	
 	References
 	
-		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - OpenGL context
-		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcreatecontext - Create OpenGL context
-		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl - OpenGL
-		https://learn.microsoft.com/en-us/windows/win32/opengl/opengl-on-windows-nt--windows-2000--and-windows-95-98 - OpenGL on Windows
-		https://learn.microsoft.com/en-us/windows/win32/opengl/using-opengl-on-windows-nt-2000-and-windows-95-98 - Using OpenGL on Windows
-		https://learn.microsoft.com/en-us/windows/win32/opengl/reference-for-win-32-extensions-to-opengl - Reference for Windows extensions to OpenGL: WGL functions, Windows functions and structures
-		https://learn.microsoft.com/en-us/windows/win32/opengl/rendering-contexts - Rendering context
-		https://learn.microsoft.com/en-us/windows/win32/opengl/pixel-formats - Pixel format
+		https://learn.microsoft.com/en-us/windows/win32/opengl/front--back--and-other-buffers - Front, back and other buffers
+		https://learn.microsoft.com/en-us/windows/win32/opengl/drawing-with-double-buffers - Drawing with double buffers
 
-- Create advanced OpenGL device context (using OpenGL extensions functions - Warning! Dummy OpenGL device context required)
+- Create basic rendering context (using WGL functions)
+	
+	Warning! Features of such a basic rendering context may be limited; it can be used as a "dummmy" rendering context to create a more advanced rendering context
+	
+	Set required pixel format to a device context
+	
+		Fill out a "PIXELFORMATDESCRIPTOR" structure describing required features
+		Obtain the index of the pixel format supported by a device context that is the closest match to a specified pixel format description ("ChoosePixelFormat" function)
+		Set that index to be the pixel format of the device context ("SetPixelFormat" function)
+	
+	Create a rendering context
+	
+		Create a rendering context suitable for that device
+		Make the rendering context - along with the device context - current
+	
+	References
+	
+		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - Create OpenGL context
+
+- Create advanced rendering context (using OpenGL extensions functions) - Warning! "Dummy" rendering context required
 
 	TODO: Notes here
+
+- Relationship
+
+	Program (1) > (n) Process (1) > (n) Thread
+	Thread (1) > (n) Window
+	Window (1) > (n) Available Device Context - (1) Current Device Context
+	
+		(3) - Private, Common, Window - if Private Display Device Context
+		(3) - Class, Common, Window - if Class Dispay Device Context
+		(2) - Common, Window - if Common Display Device Context
+		
+	Device Context (1) > (n) Supported Pixel Format - (1) Current Pixel Format
+	Device Context (1) > (n) Rendering Context - (1) Current Rendering Context
+	Thread (1) > (1) Current Rendering Context & (1) Current Device Context

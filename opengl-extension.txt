@@ -1,0 +1,10 @@
+
+- ???
+
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/opengl/extending-opengl-functions - Extending OpenGL functions
+
+- Extension Loading Library
+
+	???
