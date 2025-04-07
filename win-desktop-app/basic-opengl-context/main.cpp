@@ -8,7 +8,11 @@
 #endif
 
 #include <Windows.h>
+#include <gl/GL.h>
 //#include <tchar.h>  // Optional - build sinlge-byte, Multibyte Character Set (MBCS) and Unicode applications from same source; define "_TCHAR" data type, "_T"/"_TEXT" macro, "_tcslen" macro
+
+// Comment pragma - TODO: why???
+#pragma comment (lib, "opengl32.lib")
 
 // Function prototypes
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int);
@@ -23,6 +27,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	WNDCLASS wc = {};
 
+	wc.style = CS_OWNDC;  // Important! Private display device context
 	wc.lpfnWndProc = WndProc;  // Important! Function pointer to window-procedure function
 	wc.hInstance = hInstance;  // Important! Window class owner
 	wc.lpszClassName = WINDOW_CLASS_NAME;  // Important! Window class identifier
@@ -77,12 +82,75 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_NCCREATE)
 	{
-		MessageBox(NULL, TEXT("Application main window created - WM_NCCREATE"), TEXT("Success!"), MB_OK | MB_ICONINFORMATION);
-
 		// TODO: Handle per-window configuration data
 
-
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);  // Warning! Some lower level aspects of the window are uninitialized before WM_NCCREATE is processed - thus probably call before own processing
+	}
+
+	if (uMsg == WM_CREATE)
+	{
+		// Create an OpenGL rendering context
+		
+		// Get the private display device context of the window
+		HDC hDeviceContext = GetDC(hWnd);
+
+		// Describe required pixel format
+		PIXELFORMATDESCRIPTOR requiredPixelFormat =
+		{
+			sizeof(PIXELFORMATDESCRIPTOR),	// size of this pdf
+			1,								// version of this pdf
+			PFD_DRAW_TO_WINDOW |			// pixel buffer property flags: support window
+			PFD_SUPPORT_OPENGL |			// support OpenGL
+			PFD_DOUBLEBUFFER,				// double buffering
+			PFD_TYPE_RGBA,					// pixel data type: RGBA
+			32,								// pixel color depth
+			0, 0, 0, 0, 0, 0,				// color bits: ignored
+			0, 0,							// alpha buffer: ignored
+			0,								// accumulation buffer: ignored
+			0, 0, 0, 0,						// accumulation bits: ignored
+			24,								// z-buffer depth
+			8,								// stencil buffer depth
+			0,								// number of auxiliar buffers: ignored
+			PFD_MAIN_PLANE,					// main layer
+			0,								// number of overlay and underlay planes: ignored
+			0, 0, 0							// layer masks: ignored
+		};
+
+		// Get the index of the pixel format supported by the device context that is the closest match to required pixel format description
+		int indexPixelFormat = ChoosePixelFormat(hDeviceContext, &requiredPixelFormat);
+
+		// Set the index to be the pixel format of the device context
+		SetPixelFormat(hDeviceContext, indexPixelFormat, &requiredPixelFormat);
+
+		// Create a rendering context
+		if (HGLRC hRenderingContext = wglCreateContext(hDeviceContext))
+		{
+			// Make the rendering context (and corresponding device context) current
+			if (wglMakeCurrent(hDeviceContext, hRenderingContext))
+			{
+				// Use OpenGL core functionality - Warning! Microsoft OpenGL implementation for Windows (support up to version 1.1)
+				const GLubyte *aOpenGLVersion = glGetString(GL_VERSION);
+				
+				// TODO: Convert char string to wide char string - Warning! Can not just cast "(wchar_t*)aOpenGLVersion"
+				MessageBox(NULL, (wchar_t*)aOpenGLVersion, TEXT("OpenGL Version"), MB_OK | MB_ICONINFORMATION);
+
+				// Make the rendering context not current
+				wglMakeCurrent(hDeviceContext, NULL);
+			}
+			else
+			{
+				MessageBox(NULL, TEXT("Cannot make the rendering context current"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+			}
+
+			// Delete the rendering context - Warning! It also makes the rendering context not current if required
+			wglDeleteContext(hRenderingContext);
+		}
+		else
+		{
+			MessageBox(NULL, TEXT("Cannot create a rendering context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+		}
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
 	switch (uMsg)

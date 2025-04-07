@@ -340,6 +340,7 @@
 	References
 	
 		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - Create OpenGL context
+		https://learn.microsoft.com/en-us/cpp/preprocessor/comment-c-cpp?view=msvc-170 - Comment pragma
 
 - Create advanced rendering context (using OpenGL extensions functions) - Warning! "Dummy" rendering context required
 
