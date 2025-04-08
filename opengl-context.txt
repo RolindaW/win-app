@@ -175,7 +175,7 @@
 			"wglShareLists" function
 			
 			(extension functions)
-			"wglGetProcAddress" function
+			"wglGetProcAddress" function: return the address of an OpenGL extension function for use with the current OpenGL rendering context - Warning! Different from "GetProcAddress" function - "libloaderapi.h"
 			
 			"wglSwapMultipleBuffers" function - Warning! No (un)official documentation
 		

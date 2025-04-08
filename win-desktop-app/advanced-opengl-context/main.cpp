@@ -7,12 +7,13 @@
 #define	_UNICODE
 #endif
 
+// Includes
 #include <Windows.h>
-#include <gl/GL.h>
 //#include <tchar.h>  // Optional - build sinlge-byte, Multibyte Character Set (MBCS) and Unicode applications from same source; define "_TCHAR" data type, "_T"/"_TEXT" macro, "_tcslen" macro
 
+#include "wglextcustom.h"
+
 // Comment pragma - The linker searches for this library the same way as if specified on the command line
-//#pragma comment (lib, "gdi32.lib")
 #pragma comment (lib, "opengl32.lib")
 
 // Function prototypes
@@ -23,7 +24,11 @@ BOOL InitializeHelperWindow(void);
 void TerminateHelperWindow(void);
 BOOL InitializeMainWindow(void);
 void TerminateMainWindow(void);
-BOOL CreateDummyRenderingContext(void);
+void* GetAnyGLFunctionAddress(const char*);
+int IsWGLExtensionSupported(const char*);
+BOOL LoadWGLExtensions(void);
+BOOL CreateAdvancedRenderingContext(void);
+void TerminateAdvancedRenderingContext(void);
 
 // Typedefs
 typedef struct _Window
@@ -35,15 +40,33 @@ typedef struct _Window
 	HGLRC renderingContext;
 };
 
+// Warning! Current architecture only support single main window
 typedef struct _WindowBundle
 {
 	HINSTANCE instance;
 	_Window helperWindow;
 	_Window mainWindow;
+	BOOL mainWindowShouldClose;
 };
+
+typedef struct _WGL
+{
+	PFNWGLGETEXTENSIONSSTRINGARBPROC GetExtensionsStringARB;
+	PFNWGLGETEXTENSIONSSTRINGEXTPROC GetExtensionsStringEXT;
+	PFNWGLGETPIXELFORMATATTRIBIVARBPROC GetPixelFormatAttribivARB;
+	PFNWGLCREATECONTEXTATTRIBSARBPROC CreateContextAttribsARB;
+	int ARB_pixel_format_supported;
+	int ARB_create_context_supported;
+};
+
+#define wglGetExtensionsStringARB _wgl.GetExtensionsStringARB
+#define wglGetExtensionsStringEXT _wgl.GetExtensionsStringEXT
+#define wglGetPixelFormatAttribivARB _wgl.GetPixelFormatAttribivARB
+#define wglCreateContextAttribsARB _wgl.CreateContextAttribsARB
 
 // Global variables
 _WindowBundle _windowBundle;
+_WGL _wgl;
 
 // Application entry-point function
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
@@ -51,24 +74,25 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	_windowBundle.instance = hInstance;
 
 	// Initialize windows
-	if (!InitializeHelperWindow())
-	{
+	if (!InitializeHelperWindow()) {
 		return EXIT_FAILURE;
 	}
 
-	if (!InitializeMainWindow())
-	{
+	if (!InitializeMainWindow()) {
 		return EXIT_FAILURE;
 	}
 
-	// TODO: Create "dummy" rendering context and load required extensions
-
+	// TODO: Load WGL extensions required to create advanced rendering context - Warning! Require "dummy" rendering context
+	if (!LoadWGLExtensions()) {
+		return EXIT_FAILURE;
+	}
 
 	// TODO: Create advanced rendering context using loaded extensions
+	//if (!CreateAdvancedRenderingContext()) {
+	//	return EXIT_FAILURE;
+	//}
 
-
-	// TODO: Enter main window message loop (i.e. the game loop) - Warning! Do not use conventional window message loop
-
+	// Enter main window message loop (i.e. the game loop)
 	BOOL running = TRUE;
 
 	do
@@ -87,13 +111,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 			DispatchMessage(&msg);
 		}
 
-		// TODO: Check if running (i.e. main window closed)
-		running = FALSE;
+		// Check if main window close requested
+		running = !_windowBundle.mainWindowShouldClose;
 
 	} while (running);
 
-	// Terminate windows
+	// Release resources
 	TerminateHelperWindow();
+	TerminateAdvancedRenderingContext();
 	TerminateMainWindow();
 
 	return EXIT_SUCCESS;
@@ -110,8 +135,7 @@ BOOL InitializeHelperWindow(void)
 	wc.lpszClassName = TEXT("Helper Window Class");
 
 	_windowBundle.helperWindow.windowClass = RegisterClass(&wc);
-	if (!_windowBundle.helperWindow.windowClass)
-	{
+	if (!_windowBundle.helperWindow.windowClass) {
 		MessageBox(NULL, TEXT("Cannot register helper window class"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
 		return FALSE;
@@ -129,8 +153,7 @@ BOOL InitializeHelperWindow(void)
 		_windowBundle.instance,
 		NULL);
 
-	if (!_windowBundle.helperWindow.window)
-	{
+	if (!_windowBundle.helperWindow.window) {
 		MessageBox(NULL, TEXT("Cannot create helper window"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
 		return EXIT_FAILURE;
@@ -142,8 +165,7 @@ BOOL InitializeHelperWindow(void)
 	// Helper window message loop - Warning! Exit when no message is peeked
 	MSG msg = {};
 
-	while (PeekMessage(&msg, _windowBundle.helperWindow.window, 0, 0, PM_REMOVE))
-	{
+	while (PeekMessage(&msg, _windowBundle.helperWindow.window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -178,8 +200,7 @@ BOOL InitializeMainWindow(void)
 	wc.lpszClassName = TEXT("Main Window Class");
 
 	_windowBundle.mainWindow.windowClass = RegisterClass(&wc);
-	if (!_windowBundle.mainWindow.windowClass)
-	{
+	if (!_windowBundle.mainWindow.windowClass) {
 		MessageBox(NULL, TEXT("Cannot register main window class"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
 		return FALSE;
@@ -195,14 +216,15 @@ BOOL InitializeMainWindow(void)
 		NULL,
 		NULL,
 		_windowBundle.instance,
-		NULL);  // TODO: Provide per-window data
+		NULL);  // TODO: Pass per-window configuration data
 
-	if (!_windowBundle.mainWindow.window)
-	{
+	if (!_windowBundle.mainWindow.window) {
 		MessageBox(NULL, TEXT("Cannot create main window"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
 		return EXIT_FAILURE;
 	}
+
+	SetPropW(_windowBundle.mainWindow.window, L"_WB", (HANDLE)&_windowBundle);
 
 	// Show main window
 	ShowWindow(_windowBundle.mainWindow.window, SW_SHOWDEFAULT);
@@ -215,138 +237,41 @@ BOOL InitializeMainWindow(void)
 // Main window class window procedure
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (uMsg == WM_NCCREATE)
-	{
+	_WindowBundle* windowBundle = (_WindowBundle*)GetProp(hWnd, L"_WB");
+
+	if (uMsg == WM_NCCREATE) {
 		// TODO: Handle per-window configuration data
-
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);  // Warning! Some lower level aspects of the window are uninitialized before WM_NCCREATE is processed - thus probably call before own processing
-	}
-
-	if (uMsg == WM_CREATE)
-	{
-		// Create an OpenGL rendering context
-
-		// Get the private display device context of the window
-		HDC hDeviceContext = GetDC(hWnd);
-
-		// Describe required pixel format
-		PIXELFORMATDESCRIPTOR requiredPixelFormat =
-		{
-			sizeof(PIXELFORMATDESCRIPTOR),	// size of this pdf
-			1,								// version of this pdf
-			PFD_DRAW_TO_WINDOW |			// pixel buffer property flags: support window
-			PFD_SUPPORT_OPENGL |			// support OpenGL
-			PFD_DOUBLEBUFFER,				// double buffering
-			PFD_TYPE_RGBA,					// pixel data type: RGBA
-			32,								// pixel color depth
-			0, 0, 0, 0, 0, 0,				// color bits: ignored
-			0, 0,							// alpha buffer: ignored
-			0,								// accumulation buffer: ignored
-			0, 0, 0, 0,						// accumulation bits: ignored
-			24,								// z-buffer depth
-			8,								// stencil buffer depth
-			0,								// number of auxiliar buffers: ignored
-			PFD_MAIN_PLANE,					// main layer
-			0,								// number of overlay and underlay planes: ignored
-			0, 0, 0							// layer masks: ignored
-		};
-
-		// Get the index of the pixel format supported by the device context that is the closest match to required pixel format description
-		int indexPixelFormat = ChoosePixelFormat(hDeviceContext, &requiredPixelFormat);
-
-		// Set the index to be the pixel format of the device context
-		SetPixelFormat(hDeviceContext, indexPixelFormat, &requiredPixelFormat);
-
-		// Create a rendering context
-		if (HGLRC hRenderingContext = wglCreateContext(hDeviceContext))
-		{
-			// Make the rendering context (and corresponding device context) current
-			if (wglMakeCurrent(hDeviceContext, hRenderingContext))
-			{
-				// Use OpenGL core functionality - Warning! Microsoft OpenGL implementation for Windows (support up to version 1.1)
-				const GLubyte* aOpenGLVersion = glGetString(GL_VERSION);
-
-				// TODO: Convert char string to wide char string - Warning! Can not just cast "(wchar_t*)aOpenGLVersion"
-				MessageBox(NULL, (wchar_t*)aOpenGLVersion, TEXT("OpenGL Version"), MB_OK | MB_ICONINFORMATION);
-
-				// Make the rendering context not current
-				wglMakeCurrent(hDeviceContext, NULL);
-			}
-			else
-			{
-				MessageBox(NULL, TEXT("Cannot make the rendering context current"), TEXT("Error!"), MB_OK | MB_ICONERROR);
-			}
-
-			// Delete the rendering context - Warning! It also makes the rendering context not current if required
-			wglDeleteContext(hRenderingContext);
-		}
-		else
-		{
-			MessageBox(NULL, TEXT("Cannot create a rendering context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
-		}
 
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
-
+	
 	switch (uMsg)
 	{
-	case WM_SIZE:
-	{
-		int width = LOWORD(lParam);  // Macro to get the low-order word
-		int height = HIWORD(lParam);  // Macro to get the high-order word
+		// TODO: Handle required messages for input handling
 
-		// Important! Handle message in a separate function to make code more modular
-		// Warning! Use built-in multitasking facilities to avoid blocking current thread
-		//OnSize(hWnd, (UINT)wParam, width, height);
-		break;
-	}
-
-	case WM_PAINT:
-	{
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);  // Important! All painting occurs here, between "BeginPaint()" and "EndPaint()"
-
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-		const TCHAR greeting[] = TEXT("Hello, there!");
-		TextOut(hdc, 5, 5, greeting, wcslen(greeting));  // Warning! Use "_tcslen" (from "tchar.h") for encoding compatibility
-
-		EndPaint(hWnd, &ps);
-		break;
-	}
-
-	case WM_CLOSE:
-		// EN GLFW ellos solo usan WM_COSE; y lo hacen para poder a true el flag "should_close", que podemos consultar desde "fuera" en el game loop
-		// para saber cuando el suuario quiere cerrar la ventana.
-		// Creo que para esto tendriamos que crear la estructura de configuracion que se para per-window al crear para poder interactuar y leer el flag
-		// desde fuera.
-		//
-		if (MessageBox(hWnd, TEXT("Quit application?"), TEXT("Exit!"), MB_OKCANCEL) == IDOK)
+		case WM_PAINT:
 		{
-			// TODO: Check this part because collides with Destroy on main Terminate procedure
-			//
-			// !!!
-			// !!!
-			// Aqui lo unico que habria que hacer seria poner el flag "should_close" a true y nada mas.
-			// Lo del message box preguntando es opcional, lo podemos dejar sin mas.
-			//
-			// Esto no hay que hacer, el destroy se hace fuera
-			//DestroyWindow(hWnd);  // Put "WM_DESTROY" message on the queue - Warning! Default behavior if message unhandled
+			// TODO: Remove - Warning! Not necessary
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+
+			FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+
+			EndPaint(hWnd, &ps);
+
+			return 0;
 		}
-		break;
 
-	// TODO: este tampoco hace falta, lo podemos borrar porque vamos  aterminar la ejecuicion con el flag que pondremos en WM_CLOSE
-	// y ademas no deneceitamos el WM_QUIT para salir del loop porque no vamos a usar la funcion GetMesssage - y de hecho
-	// no podemos poruqe  sino nos quedariamos de forma indefinida en el loop del polling de los mensajes de ventana en el game loop
-	case WM_DESTROY:  // Important! Message sent after window is removed from screen but before destruction occurs
-		PostQuitMessage(0);  // Put "WM_QUIT" message on the queue - Important! Cause "GetMessage()" return 0 i.e. break out of message loop
-		break;
+		case WM_CLOSE:
+			if (MessageBox(hWnd, TEXT("Quit application?"), TEXT("Exit!"), MB_OKCANCEL) == IDOK)
+			{
+				windowBundle->mainWindowShouldClose = FALSE;
+			}
 
-	default:
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);  // Default window procedure for unhandled message
+			return 0;
 	}
 
-	return 0;  // Indicate message handled
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 void TerminateMainWindow(void)
@@ -357,4 +282,121 @@ void TerminateMainWindow(void)
 	if (_windowBundle.mainWindow.windowClass) {
 		UnregisterClass(MAKEINTATOM(_windowBundle.mainWindow.windowClass), _windowBundle.instance);
 	}
+}
+
+void* GetAnyGLFunctionAddress(const char* name)
+{
+	// Try get OpenGL function pointer from version above 1.1
+	void* p = (void*)wglGetProcAddress(name);
+
+	// Check error - Warning! Return value may be implementation-specific on failure: NULL - 0 - (default), 1, 2, 3 or -1
+	if (p == 0 ||
+		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
+		(p == (void*)-1))
+	{
+		// Try get OpenGL function pointer from version 1.1 (i.e. from "opengl32.dll" itself)
+		HMODULE module = LoadLibraryA("opengl32.dll");
+		p = (void*)GetProcAddress(module, name);
+	}
+
+	return p;
+}
+
+int IsWGLExtensionSupported(const char* extension)
+{
+	const char* extensionList = NULL;  // Warning! Space-separated extension list expected
+
+	if (_wgl.GetExtensionsStringARB)  // Warning! 
+		extensionList = wglGetExtensionsStringARB(wglGetCurrentDC());
+	else if (_wgl.GetExtensionsStringEXT)
+		extensionList = wglGetExtensionsStringEXT();
+
+	if (!extensionList)
+		return FALSE;
+
+	// TODO: Check if requested extension is on the extension list
+	return IsStringInExtensionString(extension, extensionList);
+}
+
+BOOL LoadWGLExtensions(void)
+{
+	// 1 - Create helper window "dummy" rendering context - Warning! Not necessary to store any information (i.e. pixel format - and chosen index, rendering context)
+	
+	HDC helperWindowDeviceContext = GetDC(_windowBundle.helperWindow.window);
+
+	PIXELFORMATDESCRIPTOR simplePixelFormat = {};
+
+	simplePixelFormat.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+	simplePixelFormat.nVersion = 1;
+	simplePixelFormat.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	simplePixelFormat.iPixelType = PFD_TYPE_RGBA;
+	simplePixelFormat.cColorBits = 24;
+
+	int simplePixelFormatIndex = ChoosePixelFormat(helperWindowDeviceContext, &simplePixelFormat);
+	if (!simplePixelFormatIndex) {
+		MessageBox(NULL, TEXT("Cannot match an appropriate pixel format for helper window device context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	if (!SetPixelFormat(helperWindowDeviceContext, simplePixelFormatIndex, &simplePixelFormat)) {
+		MessageBox(NULL, TEXT("Cannot set the pixel format to helper window device context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	HGLRC dummyRenderingContext = wglCreateContext(helperWindowDeviceContext);
+	if (!dummyRenderingContext) {
+		MessageBox(NULL, TEXT("Cannot create dummy rendering context for helper window"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	if (!wglMakeCurrent(helperWindowDeviceContext, dummyRenderingContext)) {
+		MessageBox(NULL, TEXT("Cannot make helper window dummy rendering context current"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	// TODO: 2 - Load required WGL extensions
+
+	// Load WGL extension functions
+	_wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
+		GetAnyGLFunctionAddress("wglGetExtensionsStringARB");  // Warning! Old and widely-implemented extension - unlikely not to be found
+	_wgl.GetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)
+		GetAnyGLFunctionAddress("wglGetExtensionsStringEXT");
+	_wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)
+		GetAnyGLFunctionAddress("wglGetPixelFormatAttribivARB");
+	_wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
+		GetAnyGLFunctionAddress("wglCreateContextAttribsARB");
+
+	// TODO: Check if WGL extensions are available
+	_wgl.ARB_pixel_format_supported =
+		IsWGLExtensionSupported("WGL_ARB_pixel_format");
+	_wgl.ARB_create_context_supported =
+		IsWGLExtensionSupported("WGL_ARB_create_context");
+
+	// 3 - Delete helper window "dummy" rendering context (no longer necessary after loading WGL extensions)  
+	//wglMakeCurrent(helperWindowDeviceContext, NULL);
+	wglDeleteContext(_windowBundle.helperWindow.renderingContext);  // Warning! Also makes rendering context not current if required
+
+	return TRUE;
+}
+
+BOOL CreateAdvancedRenderingContext(void)
+{
+	// TODO: Get advanced pixel format
+
+
+
+	// TODO: Create advanced rendering context
+
+
+
+	return TRUE;
+}
+
+void TerminateAdvancedRenderingContext(void)
+{
+	wglDeleteContext(_windowBundle.mainWindow.renderingContext);
 }
