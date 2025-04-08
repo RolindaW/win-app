@@ -11,7 +11,8 @@
 #include <gl/GL.h>
 //#include <tchar.h>  // Optional - build sinlge-byte, Multibyte Character Set (MBCS) and Unicode applications from same source; define "_TCHAR" data type, "_T"/"_TEXT" macro, "_tcslen" macro
 
-// Comment pragma - TODO: why???
+// Comment pragma - The linker searches for this library the same way as if specified on the command line
+//#pragma comment (lib, "gdi32.lib")
 #pragma comment (lib, "opengl32.lib")
 
 // Function prototypes
@@ -129,7 +130,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wglMakeCurrent(hDeviceContext, hRenderingContext))
 			{
 				// Use OpenGL core functionality - Warning! Microsoft OpenGL implementation for Windows (support up to version 1.1)
-				const GLubyte *aOpenGLVersion = glGetString(GL_VERSION);
+				const GLubyte* aOpenGLVersion = glGetString(GL_VERSION);
 				
 				// TODO: Convert char string to wide char string - Warning! Can not just cast "(wchar_t*)aOpenGLVersion"
 				MessageBox(NULL, (wchar_t*)aOpenGLVersion, TEXT("OpenGL Version"), MB_OK | MB_ICONINFORMATION);

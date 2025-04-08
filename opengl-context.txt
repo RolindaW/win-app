@@ -4,7 +4,8 @@
 	"GL/gl.h" - Core OpenGL function declarations
 	"GL/glu.h" - OpenGL Utility (GLU) library
 	"GL/glaux.h" - OpenGL Programming Guide Auxiliary (GLAUX) library
-	"wingdi.h" - WGL functions and Windows functions that support Microsoft OpenGL implementation for Windows - among others
+	"wingdi.h" - WGL functions and Windows functions that support Microsoft OpenGL implementation for Windows declarations - among others
+	"gdi32.dll" ("C:\Windows\System32") - GDI implementation
 	"opengl32.dll" ("C:\Windows\System32") - Microsoft OpenGL implementation for Windows (support up to version 1.1)
 	"opengl.dll" - Silicon Graphics OpenGL implementation for Windows
 	
@@ -148,7 +149,7 @@
 	
 		Connect OpenGL to Windows OS windowing system - Warning! Analogous to GLX extensions (connect OpenGL to X Window System - Linux OS / Mac OS)
 		Manage rendering contexts, display lists, extension functions and font bitmaps
-		"wingdi.h" library - "wgl" prefix function names
+		"wingdi.h" header - "wgl" prefix function names; "opengl32.dll" implementation
 		
 			(rendering context)
 			"wglCreateContext" function: create a new rendering context
@@ -177,11 +178,17 @@
 			"wglGetProcAddress" function
 			
 			"wglSwapMultipleBuffers" function - Warning! No (un)official documentation
+		
+		Warning! API calls
+		
+		GL related "gdi32.dll" functions (e.g. "ChoosePixelFormat") invokes (or calls) "opengl32.dll" functions (e.g. "wglChoosePixelFormat")
 	
 	Windows functions for pixel formats and double buffering
 	
+		Warning! GL related "gdi32.dll" functions (e.g. "ChoosePixelFormat") invokes (or calls) "opengl32.dll" functions (e.g. "wglChoosePixelFormat")
+		
 		Support per-window pixel formats and window double buffering (for smooth image changes) - Warning! Apply only to OpenGL graphics windows
-		"wingdi.h" library
+		"wingdi.h" header - "gdi32.dll" implementation
 		
 			(pixel format)
 			"PIXELFORMATDESCRIPTOR" structure
@@ -234,7 +241,7 @@
 		"DWORD dwDamageMask" - Warning! Ignore - no longer used
 	
 	A device context can support several pixel formats (identified with consecutive one-based index values) - Warning! A device context can have just one current pixel format
-	Each window has own current pixel format - Warning! Limited to OpenGL windows
+	Each window has own current pixel format and should only be set once (because can lead to significant complications for the Window Manager and for multithread applications) - Warning! Limited to OpenGL windows
 	
 	References
 	
@@ -340,9 +347,13 @@
 	References
 	
 		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - Create OpenGL context
+		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL & _glfwCreateContextWGL - GLFW windowing library ("dummy" and advanced) rendering context creation
 		https://learn.microsoft.com/en-us/cpp/preprocessor/comment-c-cpp?view=msvc-170 - Comment pragma
 
-- Create advanced rendering context (using OpenGL extensions functions) - Warning! "Dummy" rendering context required
+- Create advanced rendering context (using OpenGL extensions functions)
+
+	Warning! "Dummy" rendering context required - and corresponding "helper" window (because pixel format can only be set once per-window)
+	Warning! Require OpenGL function extension loading
 
 	TODO: Notes here
 

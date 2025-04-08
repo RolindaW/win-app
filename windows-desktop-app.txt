@@ -272,6 +272,7 @@
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-wndproc - "WNDPROC" callback function
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-defwindowproca - "DefWindowProc" function
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-callwindowproca - "CallWindowProc" function
+		<path>\glfw-<version>\src\win32_window.c::windowProc - GLFW windowing library window procedure implementation
 
 - Events
 

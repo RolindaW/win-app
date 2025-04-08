@@ -1,10 +1,43 @@
 
-- ???
+- Static-Link Library
+
+	???	
+
+- Dynamic-Link Library (DLL)
+
+	TODO: notes here
+	
+	
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-libraries - Dynamic-Link Library
+
+- Run-time dynamic linking
+
+	TODO: notes here
+	
+	
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows/win32/dlls/using-run-time-dynamic-linking - Using run-time dynamic linking
+		https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya - "LoadLibrary" function
+		https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress - "GetProcAddress" function
+		<path>\glfw-<version>\src\win32_module.c::_glfwPlatformLoadModule - GLFW windowing library load DLL
+		<path>\glfw-<version>\src\win32_module.c::_glfwPlatformGetModuleSymbol - GLFW windowing library get function pointer
+		<path>\glfw-<version>\src\win32_platform.h - GLFW windowing library function pointer typedef
+
+- Load OpenGL function extensions
+
+	TODO: notes here
+	
+	
 
 	References
 	
 		https://learn.microsoft.com/en-us/windows/win32/opengl/extending-opengl-functions - Extending OpenGL functions
 
-- Extension Loading Library
+- Extension Loading library
 
 	???
