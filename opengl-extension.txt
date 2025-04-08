@@ -36,8 +36,14 @@
 
 	References
 	
+		https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions - Load OpenGL functions
 		https://learn.microsoft.com/en-us/windows/win32/opengl/extending-opengl-functions - Extending OpenGL functions
+		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL - GLFW windowing library load OpenGL function extensions
 
 - Extension Loading library
 
 	???
+	
+	References
+	
+		https://www.khronos.org/opengl/wiki/OpenGL_Loading_Library - OpenGL Loading library

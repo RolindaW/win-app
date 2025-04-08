@@ -328,8 +328,9 @@
 	
 		https://learn.microsoft.com/en-us/windows/win32/opengl/front--back--and-other-buffers - Front, back and other buffers
 		https://learn.microsoft.com/en-us/windows/win32/opengl/drawing-with-double-buffers - Drawing with double buffers
+		<path>\glfw-<version>\src\wgl_context.c::swapBuffersWGL - GLFW windowing library swap buffers
 
-- Create basic rendering context (using WGL functions)
+- Create simple rendering context (using WGL functions)
 	
 	Warning! Features of such a basic rendering context may be limited; it can be used as a "dummmy" rendering context to create a more advanced rendering context
 	
@@ -346,8 +347,8 @@
 	
 	References
 	
-		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL) - Create OpenGL context
-		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL & _glfwCreateContextWGL - GLFW windowing library ("dummy" and advanced) rendering context creation
+		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)#Simple_Context_Creation - Create simple OpenGL context
+		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL - GLFW windowing library create "dummy" rendering context
 		https://learn.microsoft.com/en-us/cpp/preprocessor/comment-c-cpp?view=msvc-170 - Comment pragma
 
 - Create advanced rendering context (using OpenGL extensions functions)
@@ -355,7 +356,53 @@
 	Warning! "Dummy" rendering context required - and corresponding "helper" window (because pixel format can only be set once per-window)
 	Warning! Require OpenGL function extension loading
 
-	TODO: Notes here
+	Create "dummy" rendering context
+	
+		Create "helper" window class and window - Warning! Window may be hidden ("SW_HIDE" mode on "ShowWindow" function)
+		Set simple pixel format
+		Create "dummy" rendering context
+	
+	Load required OpenGL extensions - Warning! Use "dummy" rendering context
+	
+		Warning! "Dummy" rendering context may be deleted after loading required OpenGL extensions
+	
+		Load required WGL function extensions - Warning! These must be loaded first (needed to retrieve the extension string that tells whether functions are supported)
+		
+			(e.g. glfw - 3.4 version)
+			"wglGetExtensionsStringEXT"
+			"wglGetExtensionsStringARB"
+			"wglCreateContextAttribsARB"
+			"wglSwapIntervalEXT"
+			"wglGetPixelFormatAttribivARB"
+		
+		Load required extensions
+		
+			(e.g. glfw - 3.4 version)
+			"WGL_ARB_multisample": allow multisampled framebuffers
+			"WGL_ARB_framebuffer_sRGB": allow color buffers to be in sRGB format
+			"WGL_EXT_framebuffer_sRGB"
+			"WGL_ARB_create_context": 
+			"WGL_ARB_create_context_profile": select a core profile "WGL_CONTEXT_CORE_PROFILE_BIT_ARB" or a compatibility profile "WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB" (use "WGL_CONTEXT_PROFILE_MASK_ARB" flag)
+			"WGL_EXT_create_context_es2_profile"
+			"WGL_ARB_create_context_robustness"
+			"WGL_ARB_create_context_no_error"
+			"WGL_EXT_swap_control"
+			"WGL_EXT_colorspace"
+			"WGL_ARB_pixel_format": new mechanism for getting a pixel format number (based on providing a list of attributes and values)
+			"WGL_ARB_pixel_format_float": allow floating-point framebuffers
+			"WGL_ARB_context_flush_control"
+	
+	Create advanced OpenGL rendering context
+	
+		Create "main" window class and window
+		Set advanced pixel format (using required extensions)
+		Create advanced rendering context (using required extensions)
+	
+	References
+	
+		https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)#Proper_Context_Creation - Create advanced OpenGL context
+		<path>\glfw-<version>\src\win32_init.c::createHelperWindow - GLFW windowing library create helper window (for the "dummy" rendering context)
+		<path>\glfw-<version>\src\wgl_context.c::_glfwCreateContextWGL - GLFW windowing library create advanced rendering context
 
 - Relationship
 
