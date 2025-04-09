@@ -322,6 +322,7 @@ BOOL LoadWGLExtensions(void)
 {
 	// 1 - Create helper window "dummy" rendering context - Warning! Not necessary to store any information (i.e. pixel format - and chosen index, rendering context)
 	
+	// 1.1 - Describe required pixel format, find best match within supported by helper window device context and set to it
 	HDC helperWindowDeviceContext = GetDC(_windowBundle.helperWindow.window);
 
 	PIXELFORMATDESCRIPTOR simplePixelFormat = {};
@@ -345,6 +346,7 @@ BOOL LoadWGLExtensions(void)
 		return FALSE;
 	}
 
+	// 1.2 - Create helper window "dummy" rendering context and make it current
 	HGLRC dummyRenderingContext = wglCreateContext(helperWindowDeviceContext);
 	if (!dummyRenderingContext) {
 		MessageBox(NULL, TEXT("Cannot create dummy rendering context for helper window"), TEXT("Error!"), MB_OK | MB_ICONERROR);
@@ -360,7 +362,7 @@ BOOL LoadWGLExtensions(void)
 
 	// TODO: 2 - Load required WGL extensions
 
-	// Load WGL extension functions
+	// 2.1 - Load WGL extension functions
 	_wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
 		GetAnyGLFunctionAddress("wglGetExtensionsStringARB");  // Warning! Old and widely-implemented extension - unlikely not to be found
 	_wgl.GetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)
@@ -370,13 +372,13 @@ BOOL LoadWGLExtensions(void)
 	_wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
 		GetAnyGLFunctionAddress("wglCreateContextAttribsARB");
 
-	// TODO: Check if WGL extensions are available
+	// TODO: 2.2 - Check if WGL extensions are available
 	_wgl.ARB_pixel_format_supported =
 		IsWGLExtensionSupported("WGL_ARB_pixel_format");
 	_wgl.ARB_create_context_supported =
 		IsWGLExtensionSupported("WGL_ARB_create_context");
 
-	// 3 - Delete helper window "dummy" rendering context (no longer necessary after loading WGL extensions)  
+	// 3 - Delete helper window "dummy" rendering context - Warning! No longer necessary once WGL extensions loaded
 	//wglMakeCurrent(helperWindowDeviceContext, NULL);
 	wglDeleteContext(_windowBundle.helperWindow.renderingContext);  // Warning! Also makes rendering context not current if required
 
@@ -385,11 +387,11 @@ BOOL LoadWGLExtensions(void)
 
 BOOL CreateAdvancedRenderingContext(void)
 {
-	// TODO: Get advanced pixel format
+	// TODO: 1 - Describe required pixel format - Warning! Use loaded WGL extensions, find best match within supported by main window device context and set to it
 
 
 
-	// TODO: Create advanced rendering context
+	// TODO: 2 - Create main window advanced rendering context - Warning! Use loaded WGL extensions - and make it current
 
 
 
