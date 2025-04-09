@@ -1,36 +1,170 @@
 
-- Static-Link Library
+- Source code (C/C++)
 
-	???	
-
-- Dynamic-Link Library (DLL)
-
-	TODO: notes here
+	Header file
 	
+		Archive file with ".h" (C) extension - Warning! C++ may use ".hpp" convention
+		Contain typedefs, function prototypes, other
+		May be implemented by multiple implementation files (each with own partial implementation)
 	
+	Implementation file
+	
+		Archive file with ".c" (C) or ".cpp" (C++) extension
+		Contain the implementation of
+		May implement multiple header files
+	
+- Static library
+
+	Collection of object files
+	Archive file with ".lib" (Windows OS) or ".a" (Unix-like OS) extension
+	May be (or not - sometimes automatically done) indexed (i.e. keep object files together on the hardware) before use - Warning! It makes easier to the machine when linking the object files into an executable - rather than locating separately on the hardware
+	
+	Object file
+	
+		Contain object code (i.e. relocatable format machine code)
+		Archive file with ".obj" (Windows OS) or ".o" (Unix-like OS) extension
+		Linked into a program during the linking phase of compilation
+	
+	Static linking: copy all the object code from the static library into the executable (thus a static library is not needed at run time) - Warning! Include only required functionality - minimize executable size
+	
+	Source code file(s) > (compiler - without linking) > Object file(s) > (library manager) > Static library file
+	
+		(C++ in Window OS)
+		Source code files: "Foo.h" header file, "Foo.cpp" implementation file
+		Compile command: "cl /c /EHsc Foo.cpp" (output "Foo.obj" object file)
+		Post-build command: "lib Foo.obj" (output "Foo.lib" library file)
+		Usage (by a module): reference "Foo.lib" library file and include "Foo.h" header file
+	
+	References
+	
+		https://medium.com/@bdov_/https-medium-com-bdov-c-static-libraries-what-why-and-how-b6b442b054d3 - Static library
+		https://learn.microsoft.com/en-us/cpp/build/walkthrough-creating-and-using-a-static-library-cpp?view=msvc-170 - Create static library
+
+- Dynamic-link library (DLL)
+
+	Module that contains functions and data that can be used by another module (application or DLL)
+	Archive file with ".dll" (Windows OS) or ".so" (Unix-like OS) extension
+	
+		Internal functions: intended to be called by other modules - Warning! May also be called from within the DLL
+		External functions: called only from within the DLL
+		Data - Warning! Generally used only by its functions
+		
+		Modularize applications (easier update and reuse)
+		Reduce memory overhead when many applications use same functionality at same time (because share DLL code)
+	
+	Dynamic linking: allow a module to include only the information needed to locate an exported DLL function (or data item) at load time or run time
+	
+		Load-time dynamic linking
+		
+			Require to link the module with the import library for the DLL - Warning! The linker creates a table that contains the address of each function call
+			
+				OS search (try to locate) the DLL: on success map the DLL into the virtual address space of the process, increment the DLL reference count; on failure terminate the process, report the error
+				Call the DLL entry-point function: on failure terminate the process, report the error
+				Modify the function address table with the starting addresses for the imported DLL functions - Warning! The DLL is loaded into physical memory only when needed
+			
+			The module call exported DLL functions explicitly (i.e. as if they were local functions)
+			
+			Import library
+
+				Contain the information needed to load the DLL and locate exported DLL functions (or data items) when the application is loaded
+				Archive file with ".lib" (Windows OS) or ".a" (Unix-like OS) extension - Warning! Not a static library
+		
+		Run-time dynamic linking
+		
+			The module load the DLL ("LoadLibrary" function) on run time
+			
+				OS search (try to locate) the DLL: on success map the DLL into the virtual address space of the process (unless already mapped - return a handle to the DLL), increment the DLL reference count; on failure return NULL
+				Call the DLL entry-point function (unless already loaded): on success return a handle to the DLL; on failure return NULL
+			
+			Get the addresses of the exported DLL functions ("GetProcAddress" function)
+			Call exported DLL functions using retrieved function pointers - Warning! Thus need not an import library for the DLL
+			Free the DLL ("FreeLibrary" function) if no longer needed: decrement the DLL reference count, unmap the DLL code from the virtual address space of the process if the reference count is 0
+	
+	"DllMain" user-defined DLL entry point: called on DLL load (do initialization) or unload (do cleanup)
+	Only can have one instance running in OS
+	Can not own resources (e.g. stack, threads of execution, global memory, file handles, message queue) but can use those from calling thread (e.g. stack) and process (e.g. global memory)
 	
 	References
 	
 		https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-libraries - Dynamic-Link Library
+		https://learn.microsoft.com/en-us/cpp/build/dlls-in-visual-cpp?view=msvc-170 - Create dynamic-link library
+		https://learn.microsoft.com/en-us/cpp/build/walkthrough-creating-and-using-a-dynamic-link-library-cpp?view=msvc-170 - Create dynamic-link library
 
 - Run-time dynamic linking
 
-	TODO: notes here
-	
-	
-	
+	Warning! See above
+
 	References
 	
+		https://learn.microsoft.com/en-us/windows/win32/dlls/run-time-dynamic-linking - Run-time dynamic linking
 		https://learn.microsoft.com/en-us/windows/win32/dlls/using-run-time-dynamic-linking - Using run-time dynamic linking
 		https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya - "LoadLibrary" function
+		https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary - "FreeLibrary" function
 		https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress - "GetProcAddress" function
 		<path>\glfw-<version>\src\win32_module.c::_glfwPlatformLoadModule - GLFW windowing library load DLL
 		<path>\glfw-<version>\src\win32_module.c::_glfwPlatformGetModuleSymbol - GLFW windowing library get function pointer
 		<path>\glfw-<version>\src\win32_platform.h - GLFW windowing library function pointer typedef
 
-- Load OpenGL function extensions
+- Load WGL extensions, OpenGL core functions and OpenGL extensions
 
-	TODO: notes here
+	TODO: revisar
+	"glcorearb.h" lo mantiene y proporciona KHRONOS - declaracion de typdef de function pointers y "defines" para los enums - solo para la ultima version Opengl core profile (y sin extensiones)
+	"ext.h" tambien lo mantiene KHRONOS - delcracion de compatiblilty profile? y creo que ademas incluye todas las extensiones
+	"khrplatform.h": ???
+	
+	TODO: revisar
+	GL3W exnteison loading library
+	"gl3w_gen.py" - script que descarga ficheros "glcorearb.h" y "khrplatform.h" y genera dinamicamente los ficheros "gl3w.h" y "gl3w.c" - tambien genera algunos directorios, etc
+	"gl3w.h": variables de tipo function pointer (de los typedefs de "glcorearb.h") y "defines" para dichas variables (que son las que usaremos despues en nuestros programas)
+	"gl3w.c": hace la carga de las funciones y las almacena en las variables correspondientes definidas por "gl3w.h"
+	
+	TODO: revisar
+	"GL\gl.h": "defines" para los enums, function prototypes del core de OpenGl (v 1.1) y typdef de extensions function pointers (imagino que extensiones legacy incluidas en la implementacion de "opengl32.dll" - e imagino que de querer usarlas las tendrias que cargar tu mismo con la funcion "wglGetprocAddress" por lo que las vairalbes del tipo function pointer y los correspondientes "defines" te los tendiras que currar tu)
+	"opengl32.dll": implementacion de los function prototypes declarados en "GL\gl.h"
+
+	TODO: revisar
+	DUDA???? por que en lugar de usar directamente las variables con los function pointers se utilizan los "defines" para dichas variables??? proporciona alguna ventaja??? imagino que si, pero cual? porque entiendo que tanto para poder usar las variables como los defines tendria que incluir en mi modulo una referencia al header igualmente.
+	
+	
+	
+	
+	WGL extensions
+	
+	
+	
+	
+	OpenGL core functions
+	
+		Available OpenGL core functions (those with "gl" prefix function name) depend on both installed ICD and created rendering context version
+		Warning! Esto que acabo de decir no es cierto!!!!!!!!!!!!!
+		.....
+			
+			"opengl32.lin" loads "opengl32.dll" loads "OpenGL ICD"
+			(if no ICD installed, only default Mirosoft OpenGL implementation for Windows (v 1.1))
+			(if ICD installed, under demand - require loading WGL extensions to create advanced rendering context with advanced pixel format)
+			
+			si no tenemos ICD instalado, solo podemos usar WGL common functions: context version 1.1 ("opengl32.dll")
+			si tenemos ICD instalada, podemos o no usar WGL common functions
+			
+				WGL common functions: version del ICD (dependera de la version mas alta que nos puede ofrecer nuestro ICD actual)
+				WGL extension funcntions: version bajo demanda (desde la v1.0 - estariamos usando la implementacion de "opengl32.dll" hasta la v1.1 - hasta el maximo de la version del ICD)
+		....
+				
+		
+			Rendering context created using WGL common functions
+			Rendering context created using WGL extension functions
+	
+	*Me gustaria explicar el papel que desempena la librari "GL/GL.h" - que yo creo que es una especia de "GLAD" (con los PFN) que solo funcoina para la v 1.1.
+	y ecplicar como hacerlo manualmente
+	y explicar como hacerlo usando una EXtension Loadin Library
+	
+	
+	OpenGL extensions
+	
+		Available OpenGL extensions depend on installed OpenGL ICD
+	
+	"wglGetProcAddress" function
+	Warning! Both OpenGL functionality beyond 1.1 version (the one implemented in "opengl32.dll") and OpenGL extensions must be loaded from corresponding OpenGL ICD
 	
 	
 
@@ -38,6 +172,7 @@
 	
 		https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions - Load OpenGL functions
 		https://learn.microsoft.com/en-us/windows/win32/opengl/extending-opengl-functions - Extending OpenGL functions
+		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetprocaddress - "wglGetProcAddress" function
 		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL - GLFW windowing library load OpenGL function extensions
 
 - Extension Loading library

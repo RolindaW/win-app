@@ -5,8 +5,8 @@
 	"GL/glu.h" - OpenGL Utility (GLU) library
 	"GL/glaux.h" - OpenGL Programming Guide Auxiliary (GLAUX) library
 	"wingdi.h" - WGL functions and Windows functions that support Microsoft OpenGL implementation for Windows declarations - among others
-	"gdi32.dll" ("C:\Windows\System32") - GDI implementation
-	"opengl32.dll" ("C:\Windows\System32") - Microsoft OpenGL implementation for Windows (support up to version 1.1)
+	"gdi32.dll" ("C:\Windows\System32"), "gdi32.lib" ("C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um") - GDI implementation
+	"opengl32.dll" ("C:\Windows\System32"), "opengl32.lib" ("C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um") - Microsoft OpenGL implementation for Windows (support up to version 1.1 and provide a mechanism to load OpenGL ICD ("Installable Client Drivers") - GPU vendor installable client driver - at run time)
 	"opengl.dll" - Silicon Graphics OpenGL implementation for Windows
 	
 	References
@@ -147,9 +147,11 @@
 	
 	WGL functions
 	
+		Warning! WGL functionality can be extended (i.e. add more functions - e.g. describe pixel format, create rendering context) by using WGL extensions from modern OpenGL implementations
+		
 		Connect OpenGL to Windows OS windowing system - Warning! Analogous to GLX extensions (connect OpenGL to X Window System - Linux OS / Mac OS)
 		Manage rendering contexts, display lists, extension functions and font bitmaps
-		"wingdi.h" header - "wgl" prefix function names; "opengl32.dll" implementation
+		"wingdi.h" header ("wgl" prefix function names) - "opengl32.dll" implementation
 		
 			(rendering context)
 			"wglCreateContext" function: create a new rendering context
@@ -185,9 +187,9 @@
 	
 	Windows functions for pixel formats and double buffering
 	
-		Warning! GL related "gdi32.dll" functions (e.g. "ChoosePixelFormat") invokes (or calls) "opengl32.dll" functions (e.g. "wglChoosePixelFormat")
+		Warning! "opengl32.dll" library has own implementation of these GL-related functions (using "wgl" prefix function names) - which "gdi32.dll" library calls internally (e.g. "gdi32.dll" library "ChoosePixelFormat" function try to invoke "opengl32.dll" library "wglChoosePixelFormat" function)
 		
-		Support per-window pixel formats and window double buffering (for smooth image changes) - Warning! Apply only to OpenGL graphics windows
+		Support per-window pixel formats and window double buffering - Warning! Apply only to OpenGL graphics windows
 		"wingdi.h" header - "gdi32.dll" implementation
 		
 			(pixel format)
@@ -359,23 +361,30 @@
 	Create "dummy" rendering context
 	
 		Create "helper" window class and window - Warning! Window may be hidden ("SW_HIDE" mode on "ShowWindow" function)
-		Set simple pixel format
-		Create "dummy" rendering context
+		Retrieve simple pixel format and set it to "helper" window device context
+		Create "dummy" rendering context and make it current
 	
-	Load required OpenGL extensions - Warning! Use "dummy" rendering context
+	Load required WGL extensions - Warning! Use "dummy" rendering context
 	
-		Warning! "Dummy" rendering context may be deleted after loading required OpenGL extensions
-	
-		Load required WGL function extensions - Warning! These must be loaded first (needed to retrieve the extension string that tells whether functions are supported)
+		Warning! "Dummy" rendering context may be deleted after loading required WGL extensions - not required for using loaded WGL extensions
 		
+		TODO: Finish checking about OpenGL extension loadind and using and then explain all this well
+		???
+		??? Important!!!!!!!! come back later
+		???
+		
+		The WGL extensions we will want to load (and probably the only ones about WGL) are for advanced pixel format description (because retrieval is done using common functions) and advanced rendering context creation (request specific OpenGL version, using flags - debug, no error, robuts, forwads -, requesting profiles - core, compatibility -, etc.)
+		
+		Warning! Few must be loaded first (needed to retrieve the extension string that tells whether functions are supported)
+
 			(e.g. glfw - 3.4 version)
-			"wglGetExtensionsStringEXT"
 			"wglGetExtensionsStringARB"
+			"wglGetExtensionsStringEXT"
+			"wglGetPixelFormatAttribivARB"
 			"wglCreateContextAttribsARB"
 			"wglSwapIntervalEXT"
-			"wglGetPixelFormatAttribivARB"
 		
-		Load required extensions
+		Load required extensions - ??? Really check for available extension using one of the previoous loaded WGL  ("wglGetExtensionsStringARB" or "wglGetExtensionsStringEXT")
 		
 			(e.g. glfw - 3.4 version)
 			"WGL_ARB_multisample": allow multisampled framebuffers
@@ -395,8 +404,8 @@
 	Create advanced OpenGL rendering context
 	
 		Create "main" window class and window
-		Set advanced pixel format (using required extensions)
-		Create advanced rendering context (using required extensions)
+		Retrieve advanced pixel format (using required extensions) and set it to "main" window device context
+		Create advanced rendering context (using required extensions) and make it current
 	
 	References
 	
