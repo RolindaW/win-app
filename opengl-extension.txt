@@ -105,69 +105,156 @@
 		<path>\glfw-<version>\src\win32_module.c::_glfwPlatformGetModuleSymbol - GLFW windowing library get function pointer
 		<path>\glfw-<version>\src\win32_platform.h - GLFW windowing library function pointer typedef
 
-- Load WGL extensions, OpenGL core functions and OpenGL extensions
+- OpenGL extensions
 
-	TODO: revisar
-	"glcorearb.h" lo mantiene y proporciona KHRONOS - declaracion de typdef de function pointers y "defines" para los enums - solo para la ultima version Opengl core profile (y sin extensiones)
-	"ext.h" tambien lo mantiene KHRONOS - delcracion de compatiblilty profile? y creo que ademas incluye todas las extensiones
-	"khrplatform.h": ???
+	???
 	
-	TODO: revisar
-	GL3W exnteison loading library
-	"gl3w_gen.py" - script que descarga ficheros "glcorearb.h" y "khrplatform.h" y genera dinamicamente los ficheros "gl3w.h" y "gl3w.c" - tambien genera algunos directorios, etc
-	"gl3w.h": variables de tipo function pointer (de los typedefs de "glcorearb.h") y "defines" para dichas variables (que son las que usaremos despues en nuestros programas)
-	"gl3w.c": hace la carga de las funciones y las almacena en las variables correspondientes definidas por "gl3w.h"
+	Extension name
 	
-	TODO: revisar
-	"GL\gl.h": "defines" para los enums, function prototypes del core de OpenGl (v 1.1) y typdef de extensions function pointers (imagino que extensiones legacy incluidas en la implementacion de "opengl32.dll" - e imagino que de querer usarlas las tendrias que cargar tu mismo con la funcion "wglGetprocAddress" por lo que las vairalbes del tipo function pointer y los correspondientes "defines" te los tendiras que currar tu)
-	"opengl32.dll": implementacion de los function prototypes declarados en "GL\gl.h"
-
-	TODO: revisar
-	DUDA???? por que en lugar de usar directamente las variables con los function pointers se utilizan los "defines" para dichas variables??? proporciona alguna ventaja??? imagino que si, pero cual? porque entiendo que tanto para poder usar las variables como los defines tendria que incluir en mi modulo una referencia al header igualmente.
-	
-	
-	
-	
-	WGL extensions
-	
-	
-	
-	
-	OpenGL core functions
-	
-		Available OpenGL core functions (those with "gl" prefix function name) depend on both installed ICD and created rendering context version
-		Warning! Esto que acabo de decir no es cierto!!!!!!!!!!!!!
-		.....
-			
-			"opengl32.lin" loads "opengl32.dll" loads "OpenGL ICD"
-			(if no ICD installed, only default Mirosoft OpenGL implementation for Windows (v 1.1))
-			(if ICD installed, under demand - require loading WGL extensions to create advanced rendering context with advanced pixel format)
-			
-			si no tenemos ICD instalado, solo podemos usar WGL common functions: context version 1.1 ("opengl32.dll")
-			si tenemos ICD instalada, podemos o no usar WGL common functions
-			
-				WGL common functions: version del ICD (dependera de la version mas alta que nos puede ofrecer nuestro ICD actual)
-				WGL extension funcntions: version bajo demanda (desde la v1.0 - estariamos usando la implementacion de "opengl32.dll" hasta la v1.1 - hasta el maximo de la version del ICD)
-		....
-				
+		Official name of the extension
+		Begin with a prefix - indicate who developed (or promoted) the extension - Warning! Extension promotion flow: vendor-specific > EXT > ARB > Core OpenGL
 		
-			Rendering context created using WGL common functions
-			Rendering context created using WGL extension functions
+			"ARB": extensions officially approved by the OpenGL ARB (Architecture Review Board)
+			"EXT": extensions agreed upon by multiple OpenGL vendors
+			"NV": NVIDIA Corporation
+			"AMD": AMD
+			"INTEL": Intel
+			"MESA": Mesa
 	
-	*Me gustaria explicar el papel que desempena la librari "GL/GL.h" - que yo creo que es una especia de "GLAD" (con los PFN) que solo funcoina para la v 1.1.
-	y ecplicar como hacerlo manualmente
-	y explicar como hacerlo usando una EXtension Loadin Library
+	Extension name strings
 	
+		Allow identify whether an extension is supported by a given OpenGL implementation or not
+		Begin with a prefix - indicate extension target (core OpenGL or window system)
+		
+			Warning! May be multiple strings if the extension provides both core OpenGL rendering functionality and window system dependent functionality
+			
+			"GL" prefix: core OpenGL extension
+			"GLX" prefix: X Window System extension
+			"WGL" prefix: Win32 window system extension
 	
-	OpenGL extensions
+	WGL
 	
-		Available OpenGL extensions depend on installed OpenGL ICD
+		"WGL_ARB_extensions_string"
+		
+			"const char *wglGetExtensionsStringARB(HDC hdc)": determine which WGL extensions are supported by a device - Warning! Promoted from "WGL_EXT_extensions_string::wglGetExtensionsStringEXT"
+		
+		"WGL_EXT_extensions_string"
+		
+			"const char *wglGetExtensionsStringEXT(void)": determine which WGL extensions are supported by a device - Warning! Promoted to "WGL_ARB_extensions_string::wglGetExtensionsStringARB"
+		
+		Pixel format
+			
+			"WGL_ARB_pixel_format"
+			
+				"BOOL wglGetPixelFormatAttribivARB(HDC hdc, ...)": ???
+				"BOOL wglGetPixelFormatAttribfvARB(HDC hdc, ...)"
+				"BOOL wglChoosePixelFormatARB(HDC hdc, ...)"
+			
+			"WGL_ARB_pixel_format_float"
+			
+				???
+			
+			"WGL_EXT_pixel_format"
+			
+				???
+			
+			"WGL_ATI_pixel_format_float"
+			
+				???
+			
+			"WGL_EXT_pixel_format_packed_float"
+			
+				???
+		
+		Rendering context
+		
+			"WGL_ARB_create_context"
+			
+				"HGLRC wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, ...)": ???
+			
+			"WGL_ARB_create_context_profile"
+			
+				???
+			
+			"WGL_ARB_create_context_robustness"
+			
+				???
+			
+			"WGL_ARB_create_context_no_error"
+			
+				???
+			
+			"WGL_EXT_create_context_es_profile"
+			
+				???
+			
+			"WGL_EXT_create_context_es2_profile"
+			
+				???
+		
+		Buffer
+		
+			"WGL_EXT_swap_control"
+			
+				"BOOL wglSwapIntervalEXT(int interval)": ???			
 	
-	"wglGetProcAddress" function
-	Warning! Both OpenGL functionality beyond 1.1 version (the one implemented in "opengl32.dll") and OpenGL extensions must be loaded from corresponding OpenGL ICD
+	References
 	
+		https://www.khronos.org/opengl/wiki/OpenGL_Extension - OpenGL extensions
+		https://www.opengl.org/archives/resources/features/OGLextensions/ - OpenGL extensions
+		https://registry.khronos.org/OpenGL/index_gl.php - OpenGL Registry (ARB and KHR Extensions by number)
+		
+		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_extensions_string.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_extensions_string.txt
+		
+		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_color_buffer_float.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_pixel_format.txt
+		https://registry.khronos.org/OpenGL/extensions/ATI/WGL_ATI_pixel_format_float.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/EXT_packed_float.txt
+		
+		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context_robustness.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_create_context_es2_profile.txt
+		
+		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
 	
+- API and extension headers
 
+	Define interfaces (i.e. enumerants, function prototypes, function pointer typedefs)
+	Maintained by Khronos Group
+	
+		"KHR/khrplatform.h": platform header file common to multiple Khronos APIs (e.g. OpenGL, OpenGL ES, OpenGL SC, Vulkan)
+		
+		Warning! Not #include both <GL/glcorearb.h> and either of <GL/gl.h> or <GL/glext.h> in the same source file
+		
+		"GL/glcorearb.h": OpenGL core profile interfaces; ARB extension interfaces
+		"GL/glext.h": OpenGL (1.2 and above) compatibility profile interfaces; (all) extension interfaces
+		
+		"GL/wgl.h": WGL (1.0) API interfaces; WGL extension interfaces - Warning! Windows OS provide "wingdi.h"
+		"GL/wglext.h": WGL extension interfaces
+		"GL/glxext.h": GLX (1.3 and above) API interfaces; GLX extension interfaces - Warning! Unix-like systems provide standard "GL/glx.h"
+	
+	References
+	
+		https://registry.khronos.org/OpenGL/index_gl.php - OpenGL Registry (API and extension headers files)
+		https://registry.khronos.org/OpenGL/api/GL/ - Header files
+
+- OpenGL function pointers
+
+	Function pointer typedef
+	Function pointer declaration (i.e. variable) - Warning! It is a common practice to encapsulate OpenGL function pointers with "define" directive
+	Function pointer loading ("wglGetProcAddress" function) - Warning! Require current rendering context
+
+- Load WGL extensions, modern OpenGL functions and OpenGL extensions (with corresponding extension functions)
+
+	Warning! Available functions depend on installed and available ICD
+	
+	Load "opengl32.dll"
+	Create a rendering context
+	Load required function pointer ("wglGetProcAddress" function) - Warning! Run-time dynamic link require to load "wglGetProcAddress" function manually
+	
 	References
 	
 		https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions - Load OpenGL functions
@@ -175,10 +262,40 @@
 		https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetprocaddress - "wglGetProcAddress" function
 		<path>\glfw-<version>\src\wgl_context.c::_glfwInitWGL - GLFW windowing library load OpenGL function extensions
 
-- Extension Loading library
+- Extension loading library
 
 	???
 	
 	References
 	
-		https://www.khronos.org/opengl/wiki/OpenGL_Loading_Library - OpenGL Loading library
+		https://www.khronos.org/opengl/wiki/OpenGL_Loading_Library
+
+- GL3C extension loading library
+
+	OpenGL core profile loading library
+	
+	API
+	
+		"gl3wInit": initialize the library - Warning! Require (create and make current) a rendering context
+		"gl3wIsSupported": check if specified OpenGL version is available
+		"gl3wGetProcAddress": get specified function pointer - Warning! Only useful for extension functions outside core profile (because others already loaded by the library)
+	
+	Options
+	
+		"--ext": include OpenGL extensions in "gl3w.h" header
+	
+	"gl3w_gen.py" - Python script; download "KHR/khrplatform.h" and "GL/glcorearb.h" header files and generate "gl3w.h" and "gl3w.c" files - Warning! Create corresponding directories ("include/KHR", "include/GL", "src")
+	"gl3w.h": declare function pointers (function pointer typedefs from "GL/glcorearb.h" header) and corresponding "define" directive encapsulation
+	"gl3w.c": load function pointers (into function pointers from "gl3w.h" header)
+	
+	References
+	
+		https://github.com/skaslev/gl3w
+
+- OpenGL "SDK" (libraries, tools, guides)
+
+	???
+	
+	References
+	
+		https://registry.khronos.org/OpenGL-Refpages/

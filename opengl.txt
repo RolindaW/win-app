@@ -1,0 +1,118 @@
+
+- OpenGL
+
+	Specification (Khronos Group): a description of what the API should do (i.e. a contract of how OpenGL functions behave)
+	Implementation
+	
+		Warning! Graphics driver model
+		
+			ICD (Installable Client Driver) - Warning! Windows OS and OpenGL specific
+			
+				User-space (or -mode) driver: exposed via OpenGL API (e.g. "opengl32.dll" in Windows OS)
+				Kernel-space driver: communicate with hardware via OS
+		
+		Graphics hardware (or GPU) vendors (e.g. "nvoglv64.dll" - Nvidia, "atioglxx.dll" - AMD, "ig4icd64.dll" - Intel)
+		
+			Most common and performant
+			Often proprietary (e.g. Nvidia driver stack on Linux and Windows OS)
+			Sometimes go beyond OpenGL specification (i.e. expose extensions)
+		
+		OS vendors
+		
+			Microsoft: OpenGL implementation for Windows OS "opengl32.dll" - Warning! Up to version 1.1
+			Apple: OpenGL stack for macOS - Warning! Deprecated in favor of Metal
+			Unix-like systems (e.g. Linux, BSD): not ship unified OpenGL implementation - Warning! Rely on Mesa and/or GPU vendor drivers
+		
+		Mesa
+		
+			Open-source
+			Full software (e.g. LLVMpipe, Softpipe) vs. GPU-backed (or mixed) drivers (e.g. i965, iris, radeonsi)
+			
+				User-space driver - Warning! GPU vendors (e.g. AMD, Intel) only write kernel-space driver
+				Talk to the kernel via DRM (Direct Rendering Manager) and Gallium framework - Warning! GPU vendors offload kernel-space driver work to the kernel DRM subsystem
+		
+		Other (less-known)
+		
+			Zink: OpenGL implementation on top of Vulkan
+			ANGLE (Google): translate OpenGL ES to Direct3D
+			MoltenGL: translate OpenGL/OpenGL ES to Metal
+	
+	Desktop OpenGL variants
+	
+		OpenGL ES (Embedded System): subset of desktop OpenGL for embedded and mobile systems (e.g. consoles, phones, appliances, vehicles)
+		
+			OpenGL SC (Safety Critical): subset of OpenGL ES for safety critical markets (e.g. avionics and automotive displays)
+			WebGL: subset of OpenGL ES for the web (exposed to ECMAScript via HTML5 "Canvas" element)
+	
+	Core OpenGL functions (up to version 1.1)
+	Mordern OpenGL (beyond version 1.1)
+	
+		WGL extensions - Warning! Or for corresponding windowing system (e.g. GLX on Unix-like systems)
+		Modern OpenGL functions
+		OpenGL extensions (with corresponding extension functions)
+
+- "GL/gl.h" header
+
+	Warning! Only if core OpenGL version 1.1 required; avoid if modern OpenGL required (may conflict) - use other (custom or thrid party) OpenGL header or extension loading library instead
+	
+	Enumerations ("define" directive) and function prototypes (i.e. straight use) for Core OpenGL version 1.1
+	Function pointer typedefs (i.e. load required) for OpenGL extensions - Warning! Just a few - may be outdated
+
+- "opengl32.dll" DLL
+
+	Warning! Mandatory - because act as a shim (or dispatcher) to GPU vendor driver
+	
+	Microsoft OpenGL implementation for Windows OS
+	
+		Declarations in "GL/GL.h" header
+		Full software (i.e. CPU only - no support hardware accelaration - slow) - via GDI
+		Core API - no extensions
+		All versions up to 1.1 (i.e. version 1.0) - because deprecation model was introduced later (version 3.0)
+	
+	WGL functions
+	
+		Declarations in "wingdi.h" header
+		Manage pixel format - Warning! These are called internally from equivalents implemented in "gdi32.dll"
+		Manage rendering context
+		Load GPU vendor-specific hardware-accelerated OpenGL functions beyond version 1.1 ("wglGetProcAddress" function) - Warning! Most important feature
+	
+	Pass-through mechanism
+	
+		Delegate to the actual driver-provided OpenGL implementation (GPU vendor driver) if installed and available; otherwise, fallback to default implementation - Warning! Only for core OpenGL version 1.1 functions (i.e. pretty useless)
+
+- OpenGL under the hood (Windows OS)
+
+	Warning! Notably different from Unix-like systems
+
+	OS run application
+	Application link to "opengl32.dll" DLL
+	
+		Load-time dynamic link
+		
+			Link with "opengl32.lib" import library ("comment" pragma vs. linker command line)
+			(Optional - Only if core OpenGL version 1.1 required) Include "GL/gl.h" header to get OpenGL version 1.1 enumerations and function protoypes (i.e. not require to load function pointers manually)
+		
+		Run-time dynamic link
+		
+			Load "opengl32.dll" DLL manually ("LoadLibrary" function) - Warning! Require free DLL when done ("FreeLibrary" function)
+			(Optional - Only if core OpenGL version 1.1 required) Load OpenGL version 1.1 function pointers manually ("GetProcAddress" function)
+	
+	OS load "opengl32.dll" DLL into the process - Warning! Export only core OpenGL version 1.1 API
+	Application create a rendering context - Warning! Require a window with a valid pixel format set on its device context
+	
+		Warning! Rendering context is handled by ICD if installed and available; otherwise, fallback to "opengl32.dll" DLL
+		
+		"opengl32.dll" DLL call GDI to identify device and pixel format
+		Query OS registry to determine appropriate ICD for active GPU
+		Load ICD - Warning! Export a per-(rendering-)context function dispatch table (contain pointers to OpenGL functions)
+	
+	"opengl32.dll" DLL delegate all calls to ICD via exported function dispatch table - Warning! Either core OpenGL version 1.1 functions and moder OpenGL functions and extension functions
+	
+		Warning! Modern OpenGL functions and extension functions (ARB, EXT, vendor-specific) must be loaded manually ("wglGetProcAddress" function) - often (rendering-)context-specific
+		
+		User-space ICD communicate with kernel-space driver - Warning! Use WDDM (Windows Display Driver Model) subsystem
+		Kernel-space driver translate OpenGL calls into GPU commands
+	
+	References
+	
+		https://learn.microsoft.com/en-us/windows-hardware/drivers/display/loading-an-opengl-installable-client-driver
