@@ -44,12 +44,15 @@
 			OpenGL SC (Safety Critical): subset of OpenGL ES for safety critical markets (e.g. avionics and automotive displays)
 			WebGL: subset of OpenGL ES for the web (exposed to ECMAScript via HTML5 "Canvas" element)
 	
-	Core OpenGL functions (up to version 1.1)
-	Mordern OpenGL (beyond version 1.1)
+	Core OpenGL (up to version 1.1)
+		
+		Core OpenGL functions
+		Standard window system functions (e.g. WGL - Windows OS, GLX - Unix-like systems)
+		
+	OpenGL extensions (beyond version 1.1)
 	
-		WGL extensions - Warning! Or for corresponding windowing system (e.g. GLX on Unix-like systems)
 		Modern OpenGL functions
-		OpenGL extensions (with corresponding extension functions)
+		Modern window system functions
 
 - "GL/gl.h" header
 

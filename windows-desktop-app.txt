@@ -235,7 +235,7 @@
 		https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles - Window style
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow - "ShowWindow" function
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatewindow - "UpdateWindow" function
-		<path>\glfw-<version>\src\win32_window.c::_glfwCreateWindowWin32, createNativeWindow - GLFW windowing library create main window
+		"<path>\glfw-<version>\src\win32_window.c::_glfwCreateWindowWin32", "createNativeWindow" - GLFW windowing library create main window
 
 - Window procedure
 
@@ -273,8 +273,8 @@
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-wndproc - "WNDPROC" callback function
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-defwindowproca - "DefWindowProc" function
 		https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-callwindowproca - "CallWindowProc" function
-		<path>\glfw-<version>\src\win32_window.c::windowProc - GLFW windowing library window procedure implementation
-		<path>\glfw-<version>\src\win32_window.c::_glfwPollEventsWin32 - GLFW windowing library poll main window messages
+		"<path>\glfw-<version>\src\win32_window.c::windowProc" - GLFW windowing library window procedure implementation
+		"<path>\glfw-<version>\src\win32_window.c::_glfwPollEventsWin32" - GLFW windowing library poll main window messages
 
 - Events
 

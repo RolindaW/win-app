@@ -116,7 +116,7 @@
 		
 			"ARB": extensions officially approved by the OpenGL ARB (Architecture Review Board)
 			"EXT": extensions agreed upon by multiple OpenGL vendors
-			"NV": NVIDIA Corporation
+			"NV": Nvidia
 			"AMD": AMD
 			"INTEL": Intel
 			"MESA": Mesa
@@ -134,69 +134,250 @@
 	
 	WGL
 	
-		"WGL_ARB_extensions_string"
+		"WGL_ARB_extensions_string" - Warning! Promoted from "WGL_EXT_extensions_string"
 		
-			"const char *wglGetExtensionsStringARB(HDC hdc)": determine which WGL extensions are supported by a device - Warning! Promoted from "WGL_EXT_extensions_string::wglGetExtensionsStringEXT"
+			"const char *wglGetExtensionsStringARB(HDC hdc)": determine which WGL extensions are supported by a device
 		
-		"WGL_EXT_extensions_string"
+		Pixel format - Warning! Only to choose a pixel format (i.e. perform remaining - describe, set - with standard WGL functions)
+			
+			"WGL_ARB_pixel_format" - Warning! Promoted from "WGL_EXT_pixel_format"
+			
+				Query pixel format attributes (by name) and choose from the list of supported pixel formats
+			
+				"BOOL wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)"
+				
+					"<hdc>": device context on which to be queried pixel format is supported
+					"<iPixelFormat>": to be queried pixel format index
+					"<iLayerPlane>": to be queried plane (positive value - "1" (first), "2", ... - overlay planes; negative value - "-1" (first), "-2", ... - underlay planes; "0" main plane)
+					"<nAttributes>": to be queried number of attributes
+					"<*piAttributes>": to be queried pixel format attribute name list - Warning! Terminated by attribute name "0"
+					"<*piValues>": return integer pixel format attribute value list
+				
+				"BOOL wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, float *pfValues)"
+				
+					"<*pfValues>": float pixel format attribute value list
+				
+				"BOOL wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)"
+				
+					Warning! Mandatory when use new pixel format attributes (those introduced by extensions) - because unknown for standard WGL "ChoosePixelFormat" function
+					
+					"<hdc>": device context
+					"<*piAttribIList>": pixel format attribute list (integer attribute value) - a sequence of <name,value> pairs - Warning! Terminated by attribute name (attribute value not required) "0"
+					
+						Ignore non-specified attributes
+					
+					"<*pfAttribFList>": pixel format attribute list (float attribute value)
+					"<nMaxFormats>": to be queried maximum number of pixel formats
+					"<*piFormats>": return matching pixel format index list - Warning! Closest match and best format first
+					"<*nNumFormats>": return number of matching pixel formats
+				
+				Attribute name in "<*piAttributes>" argument to "wglGetPixelFormatAttribivARB" and "wglGetPixelFormatAttribfvARB"
+				Attribute name in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					"WGL_NUMBER_PIXEL_FORMATS_ARB 0x2000": number of pixel formats for the device context - Warning! Not all pixel format supported by the device context may be available (thus may be less than return by "DescribePixelFormat" function)
+					"WGL_DRAW_TO_WINDOW_ARB 0x2001"
+					"WGL_DRAW_TO_BITMAP_ARB 0x2002"
+					"WGL_ACCELERATION_ARB 0x2003"
+					"WGL_NEED_PALETTE_ARB 0x2004"
+					"WGL_NEED_SYSTEM_PALETTE_ARB 0x2005"
+					"WGL_SWAP_LAYER_BUFFERS_ARB 0x2006"
+					"WGL_SWAP_METHOD_ARB 0x2007"
+					"WGL_NUMBER_OVERLAYS_ARB 0x2008"
+					"WGL_NUMBER_UNDERLAYS_ARB 0x2009"
+					"WGL_TRANSPARENT_ARB 0x200A"
+					"WGL_TRANSPARENT_RED_VALUE_ARB 0x2037"
+					"WGL_TRANSPARENT_GREEN_VALUE_ARB 0x2038"
+					"WGL_TRANSPARENT_BLUE_VALUE_ARB 0x2039"
+					"WGL_TRANSPARENT_ALPHA_VALUE_ARB 0x203A"
+					"WGL_TRANSPARENT_INDEX_VALUE_ARB 0x203B"
+					"WGL_SHARE_DEPTH_ARB 0x200C"
+					"WGL_SHARE_STENCIL_ARB 0x200D"
+					"WGL_SHARE_ACCUM_ARB 0x200E"
+					"WGL_SUPPORT_GDI_ARB 0x200F"
+					"WGL_SUPPORT_OPENGL_ARB 0x2010"
+					"WGL_DOUBLE_BUFFER_ARB 0x2011"
+					"WGL_STEREO_ARB 0x2012"
+					"WGL_PIXEL_TYPE_ARB 0x2013"
+					"WGL_COLOR_BITS_ARB 0x2014"
+					"WGL_RED_BITS_ARB 0x2015"
+					"WGL_RED_SHIFT_ARB 0x2016"
+					"WGL_GREEN_BITS_ARB 0x2017"
+					"WGL_GREEN_SHIFT_ARB 0x2018"
+					"WGL_BLUE_BITS_ARB 0x2019"
+					"WGL_BLUE_SHIFT_ARB 0x201A"
+					"WGL_ALPHA_BITS_ARB 0x201B"
+					"WGL_ALPHA_SHIFT_ARB 0x201C"
+					"WGL_ACCUM_BITS_ARB 0x201D"
+					"WGL_ACCUM_RED_BITS_ARB 0x201E"
+					"WGL_ACCUM_GREEN_BITS_ARB 0x201F"
+					"WGL_ACCUM_BLUE_BITS_ARB 0x2020"
+					"WGL_ACCUM_ALPHA_BITS_ARB 0x2021"
+					"WGL_DEPTH_BITS_ARB 0x2022"
+					"WGL_STENCIL_BITS_ARB 0x2023"
+					"WGL_AUX_BUFFERS_ARB 0x2024"
+				
+				Return attribute value in "<piValues>" argument from "wglGetPixelFormatAttribivARB"
+				Return attribute value in "<pfValues>" argument from "wglGetPixelFormatAttribfvARB"
+				Attribute value in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					(for "WGL_ACCELERATION_ARB" attribute name)
+					"WGL_NO_ACCELERATION_ARB 0x2025"
+					"WGL_GENERIC_ACCELERATION_ARB 0x2026"
+					"WGL_FULL_ACCELERATION_ARB 0x2027"
+					
+					(for "WGL_SWAP_METHOD_ARB" attribute name)
+					"WGL_SWAP_EXCHANGE_ARB 0x2028"
+					"WGL_SWAP_COPY_ARB 0x2029"
+					"WGL_SWAP_UNDEFINED_ARB 0x202A"
+					
+					(for "WGL_PIXEL_TYPE_ARB" attribute name)
+					"WGL_TYPE_RGBA_ARB 0x202B"
+					"WGL_TYPE_COLORINDEX_ARB 0x202C"
+			
+			"WGL_ARB_pixel_format_float"- Warning! Promoted from "WGL_ATI_pixel_format_float"
+			
+				Allow floating-point framebuffers
+				
+				"void ClampColorARB(enum target, enum clamp)"
+				
+				Return attribute value in "<piValues>" argument from "wglGetPixelFormatAttribivARB"
+				Return attribute value in "<pfValues>" argument from "wglGetPixelFormatAttribfvARB"
+				Attribute value in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					(for "WGL_PIXEL_TYPE_ARB" attribute name)
+					"WGL_TYPE_RGBA_FLOAT_ARB 0x21A0"
+			
+			"WGL_ARB_multisample"
+			
+				Allow multisampled framebuffers (an additional buffer - called the multisample buffer - is added to the framebuffer)
+				
+				Attribute name in "<*piAttributes>" argument to "wglGetPixelFormatAttribivARB" and "wglGetPixelFormatAttribfvARB"
+				Attribute name in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					"WGL_SAMPLE_BUFFERS_ARB 0x2041"
+					"WGL_SAMPLES_ARB 0x2042"
+			
+			"WGL_ARB_framebuffer_sRGB" - Warning! Promoted from "WGL_EXT_framebuffer_sRGB"
+			
+				Allow color buffers in sRGB format
+				
+				Attribute name in "<*piAttributes>" argument to "wglGetPixelFormatAttribivARB" and "wglGetPixelFormatAttribfvARB"
+				Attribute name in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					"WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB 0x20A9"
+			
+			"WGL_EXT_colorspace" - Warning! OpenGL ES
+			
+				Allow color buffers in sRGB format
+				
+				Attribute name in "<*piAttributes>" argument to "wglGetPixelFormatAttribivARB" and "wglGetPixelFormatAttribfvARB"
+				Attribute name in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					"WGL_COLORSPACE_EXT 0x309D"
+				
+				Return attribute value in "<piValues>" argument from "wglGetPixelFormatAttribivARB"
+				Return attribute value in "<pfValues>" argument from "wglGetPixelFormatAttribfvARB"
+				Attribute value in "<*piAttribIList>" and "<*pfAttribFList>" argument to "wglChoosePixelFormatARB"
+				
+					(for "WGL_COLORSPACE_EXT" attribute name)
+					"WGL_COLORSPACE_SRGB_EXT 0x3089"
+					"WGL_COLORSPACE_LINEAR_EXT 0x308A"
 		
-			"const char *wglGetExtensionsStringEXT(void)": determine which WGL extensions are supported by a device - Warning! Promoted to "WGL_ARB_extensions_string::wglGetExtensionsStringARB"
-		
-		Pixel format
-			
-			"WGL_ARB_pixel_format"
-			
-				"BOOL wglGetPixelFormatAttribivARB(HDC hdc, ...)": ???
-				"BOOL wglGetPixelFormatAttribfvARB(HDC hdc, ...)"
-				"BOOL wglChoosePixelFormatARB(HDC hdc, ...)"
-			
-			"WGL_ARB_pixel_format_float"
-			
-				???
-			
-			"WGL_EXT_pixel_format"
-			
-				???
-			
-			"WGL_ATI_pixel_format_float"
-			
-				???
-			
-			"WGL_EXT_pixel_format_packed_float"
-			
-				???
-		
-		Rendering context
+		Rendering context - Warning! Only to create a rendering context (i.e. perform remaining - make current - with standard WGL functions)
 		
 			"WGL_ARB_create_context"
-			
-				"HGLRC wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, ...)": ???
-			
 			"WGL_ARB_create_context_profile"
 			
-				???
+				Create OpenGL rendering context
+				
+				"HGLRC wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)"
+				
+					"<*attribList>" rendering context attribute list - a sequence of <name,value> pairs - Warning! Terminated by attribute name (attribute value not required) "0"
+					
+						Use default value for non-specified attributes
+						Use specified last value for multiple times specified attributes
+				
+				Attribute name in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091"
+					"WGL_CONTEXT_MINOR_VERSION_ARB 0x2092"
+					"WGL_CONTEXT_LAYER_PLANE_ARB 0x2093"
+					"WGL_CONTEXT_FLAGS_ARB 0x2094"
+					"WGL_CONTEXT_PROFILE_MASK_ARB 0x9126"
+				
+				Attribute value for "WGL_CONTEXT_FLAGS_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_DEBUG_BIT_ARB 0x0001"
+					"WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x0002"
+				
+				Attribute value for "WGL_CONTEXT_PROFILE_MASK_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					Warning! Mutually exclusive
+					
+					"WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001"
+					"WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002"
+				
+				Error returned by "GetLastError"
+				
+					"ERROR_INVALID_VERSION_ARB 0x2095"
+					"ERROR_INVALID_PROFILE_ARB 0x2096"
 			
 			"WGL_ARB_create_context_robustness"
 			
-				???
+				Create OpenGL rendering context supporting robust buffer access behavior and a specified graphics reset notification behavior
+				
+				Attribute value for "WGL_CONTEXT_FLAGS_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB 0x00000004"
+				
+				Attribute name in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB 0x8256"
+				
+				Attribute value for "WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_NO_RESET_NOTIFICATION_ARB 0x8261"
+					"WGL_LOSE_CONTEXT_ON_RESET_ARB 0x8252"
 			
 			"WGL_ARB_create_context_no_error"
 			
-				???
+				Create OpenGL rendering context that does not generate errors (if the context supports a no error mode)
+				
+				Attribute name in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_OPENGL_NO_ERROR_ARB 0x31B3" - Warning! Set attribute value to "TRUE"
 			
-			"WGL_EXT_create_context_es_profile"
+			"WGL_EXT_create_context_es_profile" - Warning! OpenGL ES
+			"WGL_EXT_create_context_es2_profile" - Warning! OpenGL ES
 			
-				???
+				Create OpenGL ES rendering context
+				
+				Attribute value for "WGL_CONTEXT_PROFILE_MASK_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_ES_PROFILE_BIT_EXT 0x00000004"
+					"WGL_CONTEXT_ES2_PROFILE_BIT_EXT 0x00000004"
 			
-			"WGL_EXT_create_context_es2_profile"
+			"WGL_ARB_context_flush_control"
 			
-				???
+				Specify the implicit flush behavior that is desired when a rendering context is made non-current
+				
+				Attribute name in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_RELEASE_BEHAVIOR_ARB 0x2097"
+				
+				Attribute value for "WGL_CONTEXT_RELEASE_BEHAVIOR_ARB" in "<*attribList>" argument to "wglCreateContextAttribsARB"
+				
+					"WGL_CONTEXT_RELEASE_BEHAVIOR_NONE_ARB 0x0000"
+					"WGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_ARB 0x2098"
 		
 		Buffer
 		
 			"WGL_EXT_swap_control"
 			
-				"BOOL wglSwapIntervalEXT(int interval)": ???			
+				Specify a minimum periodicity of color buffer swaps (measured in video frame periods)
+				
+				"BOOL wglSwapIntervalEXT(int interval)"
+				"int wglGetSwapIntervalEXT(void)"
 	
 	References
 	
@@ -208,15 +389,19 @@
 		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_extensions_string.txt
 		
 		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
-		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_color_buffer_float.txt
 		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_pixel_format.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_color_buffer_float.txt
 		https://registry.khronos.org/OpenGL/extensions/ATI/WGL_ATI_pixel_format_float.txt
-		https://registry.khronos.org/OpenGL/extensions/EXT/EXT_packed_float.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_multisample.txt
+		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/EXT_framebuffer_sRGB.txt
+		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_colorspace.txt
 		
 		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
 		https://registry.khronos.org/OpenGL/extensions/ARB/WGL_ARB_create_context_robustness.txt
 		https://registry.khronos.org/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
 		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_create_context_es2_profile.txt
+		https://registry.khronos.org/OpenGL/extensions/KHR/KHR_context_flush_control.txt
 		
 		https://registry.khronos.org/OpenGL/extensions/EXT/WGL_EXT_swap_control.txt
 	
