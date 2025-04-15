@@ -11,7 +11,8 @@
 #include <Windows.h>
 //#include <tchar.h>  // Optional - build sinlge-byte, Multibyte Character Set (MBCS) and Unicode applications from same source; define "_TCHAR" data type, "_T"/"_TEXT" macro, "_tcslen" macro
 
-#include "glcorearbcus.h"
+#include "glloader.h"
+#include "triangle.h"
 
 // Comment pragma - The linker searches for this library the same way as if specified on the command line
 #pragma comment (lib, "opengl32.lib")
@@ -24,8 +25,6 @@ BOOL InitializeHelperWindow(void);
 void TerminateHelperWindow(void);
 BOOL InitializeMainWindow(void);
 void TerminateMainWindow(void);
-void* GetAnyGLFunctionAddress(const char*);
-int IsWGLExtensionSupported(const char*);
 BOOL LoadWGLExtensions(void);
 BOOL CreateAdvancedRenderingContext(void);
 void TerminateAdvancedRenderingContext(void);
@@ -63,20 +62,8 @@ typedef struct _WindowBundle
 	BOOL mainWindowShouldClose;
 };
 
-typedef struct _WGL
-{
-	PFNWGLGETEXTENSIONSSTRINGARBPROC GetExtensionsStringARB;
-	PFNWGLCHOOSEPIXELFORMATARBPROC ChoosePixelFormatARB;
-	PFNWGLCREATECONTEXTATTRIBSARBPROC CreateContextAttribsARB;
-};
-
-#define wglGetExtensionsStringARB _wgl.GetExtensionsStringARB
-#define wglChoosePixelFormatARB _wgl.ChoosePixelFormatARB
-#define wglCreateContextAttribsARB _wgl.CreateContextAttribsARB
-
 // Global variables
 _WindowBundle _windowBundle;
-_WGL _wgl;
 
 // Application entry-point function
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
@@ -102,12 +89,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		return EXIT_FAILURE;
 	}
 
+	InitTriangle();
+
 	// Enter main window message loop (i.e. the game loop)
 	BOOL running = TRUE;
 
 	do
 	{
-		// TODO: Render
+		// Render
+		DrawTriangle();
 
 		// Swap buffers
 		SwapBuffers(_windowBundle.mainWindow.deviceContext);
@@ -127,6 +117,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	} while (running);
 
 	// Release resources
+	TerminateTriangle();
+
 	TerminateHelperWindow();
 	TerminateAdvancedRenderingContext();
 	TerminateMainWindow();
@@ -294,44 +286,6 @@ void TerminateMainWindow(void)
 	}
 }
 
-void* GetAnyGLFunctionAddress(const char* name)
-{
-	// Try get OpenGL function pointer from version above 1.1
-	void* p = (void*)wglGetProcAddress(name);
-
-	// Check error - Warning! Return value may be implementation-specific on failure: NULL - 0 - (default), 1, 2, 3 or -1
-	if (p == 0 ||
-		(p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) ||
-		(p == (void*)-1))
-	{
-		// Try get OpenGL function pointer from version 1.1 (i.e. from "opengl32.dll" itself)
-		HMODULE module = LoadLibraryA("opengl32.dll");
-		p = (void*)GetProcAddress(module, name);
-	}
-
-	return p;
-}
-
-int IsExtensionInExtensionList(const char* extension, const char* extensionList)
-{
-	// TODO: Code here
-	return TRUE;
-}
-
-int IsWGLExtensionSupported(const char* extension)
-{
-	const char* extensionList = NULL;  // Warning! Space-separated extension list expected
-
-	if (_wgl.GetExtensionsStringARB)
-		extensionList = wglGetExtensionsStringARB(wglGetCurrentDC());
-
-	if (!extensionList)
-		return FALSE;
-
-	// Check if requested extension is on the extension list
-	return IsExtensionInExtensionList(extension, extensionList);
-}
-
 BOOL LoadWGLExtensions(void)
 {
 	// 1 - Create helper window "dummy" rendering context - Warning! Not necessary to store any information (i.e. pixel format - and chosen index, rendering context)
@@ -375,24 +329,11 @@ BOOL LoadWGLExtensions(void)
 	}
 
 	// 2 - Load required WGL extension functions
+	if (!LoadWGL()) {
+		MessageBox(NULL, TEXT("Cannot load WGL extension functions on helper window dummy rendering context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
-	// 2.1 - Load WGL extension functions
-	// Use to check if an WGL extension is available
-	_wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-		GetAnyGLFunctionAddress("wglGetExtensionsStringARB"); // Warning! Old and widely-implemented extension - unlikely not to be available
-
-	// Check if corresponding WGL extension (WGL_ARB_pixel_format) is availalbe ("IsWGLExtensionSupported" function); report error on failure
-	//if (!IsWGLExtensionSupported("WGL_ARB_pixel_format")) {
-	//	MessageBox(NULL, TEXT("Cannot find WGL_ARB_pixel_format WGL extension"), TEXT("Error!"), MB_OK | MB_ICONERROR);
-
-	//	return FALSE;
-	//}
-	_wgl.ChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)
-		GetAnyGLFunctionAddress("wglChoosePixelFormatARB");
-
-	// TODO: Check if corresponding WGL extension (WGL_ARB_create_context) is availalbe ("IsWGLExtensionSupported" function); report error on failure
-	_wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
-		GetAnyGLFunctionAddress("wglCreateContextAttribsARB");
+		return FALSE;
+	}
 
 	// 3 - Delete helper window "dummy" rendering context - Warning! No longer necessary once WGL extensions loaded
 	//wglMakeCurrent(helperWindowDeviceContext, NULL);
@@ -503,6 +444,13 @@ BOOL CreateAdvancedRenderingContext(void)
 
 	if (!wglMakeCurrent(_windowBundle.mainWindow.deviceContext, _windowBundle.mainWindow.renderingContext)) {
 		MessageBox(NULL, TEXT("Cannot make main window advanced rendering context current"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	// EXTRA - Load required WGL extension functions
+	if (!LoadModernGL()) {
+		MessageBox(NULL, TEXT("Cannot load modern GL functions on main window advanced rendering context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
 
 		return FALSE;
 	}

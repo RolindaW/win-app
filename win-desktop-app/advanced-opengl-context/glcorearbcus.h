@@ -2,22 +2,68 @@
 
 #pragma once
 
-#include <Windows.h>  // Required for "HDC", "UINT", "HGLRC" typedefs
+#include <Windows.h>  // Required for Windwos typdefs (e.g. "HDC", "UINT", "HGLRC") on WGL extension functions
 
-// Typedef - GL core enumerations
+// Core OpenGL and modern OpenGL extensions
 
-#define GL_TRUE 1
+// GL_VERSION_1_0
+
+// Enumerations
 #define GL_FALSE 0
+#define GL_TRUE 1
+#define GL_TRIANGLES 0x0004
+#define GL_COLOR 0x1800
+
+// Typedefs
+typedef unsigned int GLenum;
+typedef float GLfloat;
+typedef int GLint;
+typedef int GLsizei;
+typedef unsigned int GLuint;
+
+// Function pointer typdefs
+typedef void (WINAPI* PFNGLDRAWARRAYSPROC) (GLenum mode, GLint first, GLsizei count);
+
+typedef void (WINAPI* PFNTITIKAKA) (GLenum mode, GLint first, GLsizei count);
+
+// GL_VERSION_2_0
+
+// Enumerations
+#define GL_FRAGMENT_SHADER 0x8B30
+#define GL_VERTEX_SHADER 0x8B31
+
+// Typedefs
+typedef char GLchar;
+
+// Function pointer typdefs
+typedef GLuint(WINAPI* PFNGLCREATEPROGRAMPROC) (void);
+typedef void (WINAPI* PFNGLLINKPROGRAMPROC) (GLuint program);
+typedef void (WINAPI* PFNGLUSEPROGRAMPROC) (GLuint program);
+typedef void (WINAPI* PFNGLDELETEPROGRAMPROC) (GLuint program);
+
+typedef GLuint(WINAPI* PFNGLCREATESHADERPROC) (GLenum type);
+typedef void (WINAPI* PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length);
+typedef void (WINAPI* PFNGLCOMPILESHADERPROC) (GLuint shader);
+typedef void (WINAPI* PFNGLATTACHSHADERPROC) (GLuint program, GLuint shader);
+typedef void (WINAPI* PFNGLDELETESHADERPROC) (GLuint shader);
+
+// GL_VERSION_3_0
+
+// Function pointer typdefs
+typedef void (WINAPI* PFNGLBINDVERTEXARRAYPROC) (GLuint array);
+typedef void (WINAPI* PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint* arrays);
+typedef void (WINAPI* PFNGLCLEARBUFFERFVPROC) (GLenum buffer, GLint drawbuffer, const GLfloat* value);
+
+// GL_VERSION_4_5
+
+// Function pointer typdefs 
+typedef void (WINAPI* PFNGLCREATEVERTEXARRAYSPROC)(GLsizei n, GLuint* arrays);
+
+// WGL window system extensions
 
 // Typedef - WGL extension function pointers
-
-// Get extension strings
 typedef const char* (WINAPI* PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC);
-
-// Choose pixel format
 typedef BOOL(WINAPI* PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int*, const FLOAT*, UINT, int*, UINT*);
-
-// Create context
 typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
 
 // Typedef - WGL extension enumerations
