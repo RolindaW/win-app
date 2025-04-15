@@ -11,7 +11,7 @@
 #include <Windows.h>
 //#include <tchar.h>  // Optional - build sinlge-byte, Multibyte Character Set (MBCS) and Unicode applications from same source; define "_TCHAR" data type, "_T"/"_TEXT" macro, "_tcslen" macro
 
-#include "wglextcustom.h"
+#include "glcorearbcus.h"
 
 // Comment pragma - The linker searches for this library the same way as if specified on the command line
 #pragma comment (lib, "opengl32.lib")
@@ -31,6 +31,19 @@ BOOL CreateAdvancedRenderingContext(void);
 void TerminateAdvancedRenderingContext(void);
 
 // Typedefs
+
+typedef struct _RenderingContextDescriptor
+{
+	int majorVersion = 4;
+	int minorVersion = 6;
+	BOOL coreProfile = TRUE;
+	BOOL forward;
+	BOOL debug;
+	BOOL robustness;
+	BOOL noError;
+	BOOL flush;
+};
+
 typedef struct _Window
 {
 	ATOM windowClass;
@@ -38,6 +51,7 @@ typedef struct _Window
 	HDC deviceContext;
 	int pixelFormatIndex;
 	HGLRC renderingContext;
+	_RenderingContextDescriptor renderingContextDescriptor;
 };
 
 // Warning! Current architecture only support single main window
@@ -52,16 +66,12 @@ typedef struct _WindowBundle
 typedef struct _WGL
 {
 	PFNWGLGETEXTENSIONSSTRINGARBPROC GetExtensionsStringARB;
-	PFNWGLGETEXTENSIONSSTRINGEXTPROC GetExtensionsStringEXT;
-	PFNWGLGETPIXELFORMATATTRIBIVARBPROC GetPixelFormatAttribivARB;
+	PFNWGLCHOOSEPIXELFORMATARBPROC ChoosePixelFormatARB;
 	PFNWGLCREATECONTEXTATTRIBSARBPROC CreateContextAttribsARB;
-	int ARB_pixel_format_supported;
-	int ARB_create_context_supported;
 };
 
 #define wglGetExtensionsStringARB _wgl.GetExtensionsStringARB
-#define wglGetExtensionsStringEXT _wgl.GetExtensionsStringEXT
-#define wglGetPixelFormatAttribivARB _wgl.GetPixelFormatAttribivARB
+#define wglChoosePixelFormatARB _wgl.ChoosePixelFormatARB
 #define wglCreateContextAttribsARB _wgl.CreateContextAttribsARB
 
 // Global variables
@@ -82,15 +92,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		return EXIT_FAILURE;
 	}
 
-	// TODO: Load WGL extensions required to create advanced rendering context - Warning! Require "dummy" rendering context
+	// Load WGL extensions required to create advanced rendering context - Warning! Require "dummy" rendering context
 	if (!LoadWGLExtensions()) {
 		return EXIT_FAILURE;
 	}
 
-	// TODO: Create advanced rendering context using loaded extensions
-	//if (!CreateAdvancedRenderingContext()) {
-	//	return EXIT_FAILURE;
-	//}
+	// Create advanced rendering context using loaded extensions
+	if (!CreateAdvancedRenderingContext()) {
+		return EXIT_FAILURE;
+	}
 
 	// Enter main window message loop (i.e. the game loop)
 	BOOL running = TRUE;
@@ -265,7 +275,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_CLOSE:
 			if (MessageBox(hWnd, TEXT("Quit application?"), TEXT("Exit!"), MB_OKCANCEL) == IDOK)
 			{
-				windowBundle->mainWindowShouldClose = FALSE;
+				windowBundle->mainWindowShouldClose = TRUE;
 			}
 
 			return 0;
@@ -302,20 +312,24 @@ void* GetAnyGLFunctionAddress(const char* name)
 	return p;
 }
 
+int IsExtensionInExtensionList(const char* extension, const char* extensionList)
+{
+	// TODO: Code here
+	return TRUE;
+}
+
 int IsWGLExtensionSupported(const char* extension)
 {
 	const char* extensionList = NULL;  // Warning! Space-separated extension list expected
 
-	if (_wgl.GetExtensionsStringARB)  // Warning! 
+	if (_wgl.GetExtensionsStringARB)
 		extensionList = wglGetExtensionsStringARB(wglGetCurrentDC());
-	else if (_wgl.GetExtensionsStringEXT)
-		extensionList = wglGetExtensionsStringEXT();
 
 	if (!extensionList)
 		return FALSE;
 
-	// TODO: Check if requested extension is on the extension list
-	return IsStringInExtensionString(extension, extensionList);
+	// Check if requested extension is on the extension list
+	return IsExtensionInExtensionList(extension, extensionList);
 }
 
 BOOL LoadWGLExtensions(void)
@@ -360,23 +374,25 @@ BOOL LoadWGLExtensions(void)
 		return FALSE;
 	}
 
-	// TODO: 2 - Load required WGL extensions
+	// 2 - Load required WGL extension functions
 
 	// 2.1 - Load WGL extension functions
+	// Use to check if an WGL extension is available
 	_wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-		GetAnyGLFunctionAddress("wglGetExtensionsStringARB");  // Warning! Old and widely-implemented extension - unlikely not to be found
-	_wgl.GetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)
-		GetAnyGLFunctionAddress("wglGetExtensionsStringEXT");
-	_wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)
-		GetAnyGLFunctionAddress("wglGetPixelFormatAttribivARB");
+		GetAnyGLFunctionAddress("wglGetExtensionsStringARB"); // Warning! Old and widely-implemented extension - unlikely not to be available
+
+	// Check if corresponding WGL extension (WGL_ARB_pixel_format) is availalbe ("IsWGLExtensionSupported" function); report error on failure
+	//if (!IsWGLExtensionSupported("WGL_ARB_pixel_format")) {
+	//	MessageBox(NULL, TEXT("Cannot find WGL_ARB_pixel_format WGL extension"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+	//	return FALSE;
+	//}
+	_wgl.ChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)
+		GetAnyGLFunctionAddress("wglChoosePixelFormatARB");
+
+	// TODO: Check if corresponding WGL extension (WGL_ARB_create_context) is availalbe ("IsWGLExtensionSupported" function); report error on failure
 	_wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
 		GetAnyGLFunctionAddress("wglCreateContextAttribsARB");
-
-	// TODO: 2.2 - Check if WGL extensions are available
-	_wgl.ARB_pixel_format_supported =
-		IsWGLExtensionSupported("WGL_ARB_pixel_format");
-	_wgl.ARB_create_context_supported =
-		IsWGLExtensionSupported("WGL_ARB_create_context");
 
 	// 3 - Delete helper window "dummy" rendering context - Warning! No longer necessary once WGL extensions loaded
 	//wglMakeCurrent(helperWindowDeviceContext, NULL);
@@ -387,13 +403,109 @@ BOOL LoadWGLExtensions(void)
 
 BOOL CreateAdvancedRenderingContext(void)
 {
-	// TODO: 1 - Describe required pixel format - Warning! Use loaded WGL extensions, find best match within supported by main window device context and set to it
+	// 1 - Describe required pixel format - Warning! Use loaded WGL extensions, find best match within supported by main window device context and set to it
 
+	// TODO: Use enumerations from WGL_ARB_multisample and WGL_ARB_framebuffer_sRGB WGL extensions if available
+	const int pixelFormatAttribList[] =
+	{
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, 32,
+		WGL_DEPTH_BITS_ARB, 24,
+		WGL_STENCIL_BITS_ARB, 8,
+		0, // Terminate
+	};
 
+	_windowBundle.mainWindow.deviceContext = GetDC(_windowBundle.mainWindow.window);
+	int advancedPixelFormatIndex;
+	UINT numFormats;
+
+	if (!wglChoosePixelFormatARB(_windowBundle.mainWindow.deviceContext, pixelFormatAttribList, NULL, 1, &advancedPixelFormatIndex, &numFormats)) {
+		MessageBox(NULL, TEXT("Cannot match an appropriate pixel format for main window device context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	PIXELFORMATDESCRIPTOR advancedPixelFormat = {};
+
+	if (!DescribePixelFormat(_windowBundle.mainWindow.deviceContext, advancedPixelFormatIndex, sizeof(PIXELFORMATDESCRIPTOR), &advancedPixelFormat)) {
+		MessageBox(NULL, TEXT("Cannot describe matched pixel format for main window device context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	if (!SetPixelFormat(_windowBundle.mainWindow.deviceContext, advancedPixelFormatIndex, &advancedPixelFormat)) {
+		MessageBox(NULL, TEXT("Cannot set the pixel format to main window device context"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
 
 	// TODO: 2 - Create main window advanced rendering context - Warning! Use loaded WGL extensions - and make it current
 
+	_RenderingContextDescriptor* renderingContextDescriptor = &_windowBundle.mainWindow.renderingContextDescriptor;
+	int flags = 0;
+	int profileMask = 0;
 
+	// Warning! Corresponding WGL extension WGL_ARB_create_context availability already checked
+	if (renderingContextDescriptor->forward) {
+		flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+	}
+	
+	// TODO: Check if corresponding extension WGL_ARB_create_context_profile is available; otherwise, report error
+	if (renderingContextDescriptor->coreProfile)
+		profileMask |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+	else
+		profileMask |= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+
+	// Warning! Corresponding WGL extension WGL_ARB_create_context availability already checked
+	if (renderingContextDescriptor->debug) {
+		flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+	}
+
+	if (renderingContextDescriptor->robustness)
+	{
+		// TODO: Check if corresponding extension WGL_ARB_create_context_robustness is available; otherwise, report error
+		// TODO: Add reset notification strategy rendering context attribute into attribute list
+		flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
+	}
+
+	if (renderingContextDescriptor->flush)
+	{
+		// TODO: Check if corresponding extension WGL_ARB_context_flush_control is available; otherwise, report error
+		// TODO: Add context release behavior rendering context attribute into attribute list
+	}
+
+	if (renderingContextDescriptor->noError)
+	{
+		// TODO: Check if corresponding extension WGL_ARB_create_context_no_error is available; otherwise, report error
+		// TODO: Add context opengl no error rendering context attribute into attribute list
+	}
+
+	const int renderingContextAttribList[] =
+	{
+		WGL_CONTEXT_MAJOR_VERSION_ARB, renderingContextDescriptor->majorVersion,
+		WGL_CONTEXT_MINOR_VERSION_ARB, renderingContextDescriptor->minorVersion,
+		WGL_CONTEXT_FLAGS_ARB, flags,
+		WGL_CONTEXT_PROFILE_MASK_ARB, profileMask,
+		0, // Terminate
+	};
+
+	_windowBundle.mainWindow.renderingContext = wglCreateContextAttribsARB(_windowBundle.mainWindow.deviceContext, NULL, renderingContextAttribList);
+	if (!_windowBundle.mainWindow.renderingContext)
+	{
+		// TODO: Call "GetLastError" GL function to get error message
+		MessageBox(NULL, TEXT("Cannot create advanced rendering context for main window"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
+
+	if (!wglMakeCurrent(_windowBundle.mainWindow.deviceContext, _windowBundle.mainWindow.renderingContext)) {
+		MessageBox(NULL, TEXT("Cannot make main window advanced rendering context current"), TEXT("Error!"), MB_OK | MB_ICONERROR);
+
+		return FALSE;
+	}
 
 	return TRUE;
 }
